@@ -18,7 +18,7 @@ section .data
         dd 0            ; 0.0.0.0 = listen on all interfaces
         dq 0            ; padding
 
-    index_file    db "index.txt", 0                  ; default file if a directory is fetched (eg / becomes internally /index.txt)   
+    index_file    db "index.html", 0                 ; default file if a directory is fetched (eg / becomes internally /index.txt)   
     max_conns     equ 5                              ; max connections to queue before starting to reject them
     http_server   db "Server: NASMServer/1.0", 0     ; the server name
 
