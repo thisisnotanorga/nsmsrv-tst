@@ -10,4 +10,5 @@
 # Re-allow the file types inside any folder
 !**/*.md
 !**/*.asm
+!**/*.sh
 !**/LICENSE
