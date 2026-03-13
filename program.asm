@@ -2,6 +2,7 @@
 %include "./macros/fileutils.asm"
 %include "./macros/httputils.asm"
 %include "./macros/logutils.asm"
+%include "./macros/whatmimeisthat.asm"
 
 extern inet_ntop ; to process the client IP address
 
@@ -33,7 +34,6 @@ section .data
     response_404     db "HTTP/1.0 404 Not Found", 0
     response_400     db "HTTP/1.0 400 Bad Request", 0
 
-    content_type     db "Content-Type: text/plain", 0
     connection_close db "Connection: close", 0
 
 section .bss
@@ -258,7 +258,14 @@ _start:
 .write_common_headers:
     AAPPEND r12, http_server
     AAPPEND r12, crlf
-    AAPPEND r12, content_type
+    
+    ; content type detection
+    lea rdi, [path]
+    GET_MIME_TYPE rdi, rbx ; content type will be in rsi
+
+    mov rdi, rbx ; aappend doesnt clobbers rdi
+    AAPPEND r12, rdi
+
     AAPPEND r12, crlf
     AAPPEND r12, connection_close
     AAPPEND r12, crlf
