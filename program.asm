@@ -20,7 +20,7 @@ section .data
 
     index_file    db "index.html", 0                 ; default file if a directory is fetched (eg / becomes internally /index.txt)
     max_conns     equ 5                              ; max connections to queue before starting to reject them
-    http_server   db "Server: NASMServer/1.0", 0     ; the server name
+    server_name   db "NASMServer/1.0", 0     ; the server name
 
     ; end of the things might want to configure
 
@@ -36,6 +36,7 @@ section .data
     response_400            db "HTTP/1.0 400 Bad Request", 0
     response_200            db "HTTP/1.0 200 OK", 0
 
+    server_header           db "Server: ", 0
     content_length_header   db "Content-Length: ", 0
     connection_close_header db "Connection: close", 0
 
@@ -309,29 +310,30 @@ _start:
 .write_405:
     AAPPEND r12, response_405
     AAPPEND r12, crlf
-    jmp .header_http_server
+    jmp .header_server
 
 .write_404:
     AAPPEND r12, response_404
     AAPPEND r12, crlf
-    jmp .header_http_server
+    jmp .header_server
 
 .write_403:
     AAPPEND r12, response_403
     AAPPEND r12, crlf
-    jmp .header_http_server
+    jmp .header_server
 
 .write_400:
     AAPPEND r12, response_400
     AAPPEND r12, crlf
-    jmp .header_http_server
+    jmp .header_server
 
 .write_200:
     AAPPEND r12, response_200
     AAPPEND r12, crlf
 
-.header_http_server:
-    AAPPEND r12, http_server
+.header_server:
+    AAPPEND r12, server_header
+    AAPPEND r12, server_name
     AAPPEND r12, crlf
 
 .header_content_type:
