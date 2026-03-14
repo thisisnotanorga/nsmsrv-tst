@@ -38,7 +38,7 @@ section .data
         dq 0               ; padding
 
     sockopt         dd 1   ; value for SO_REUSEADDR
-    client_addr_len dd 16
+    client_addr_len dd 16  ; data directive for accept() (at .wait)
 
     ; HTTP constants
     crlf                    db 0xd, 0xa, 0
@@ -54,30 +54,39 @@ section .data
     connection_close_header db "Connection: close", 0
 
 section .bss
+    ; network
+    client_addr         resb 16
+    client_ip_str       resb 16    ; "255.255.255.255\0"
+
+    ; request / response
     request             resb 1024
     response            resb 1024
-    client_addr         resb 16
-    path                resb 256  ; should be enough for now
-    last_status         resw 1    ; for logs
-    client_ip_str       resb 16   ; "255.255.255.255\0"
-    content_length_b    resb 20
-    process_count       resb 1    ; current processes count
-    file_to_serve       resq 1    ; pointer to path to serve, or 0 for none
-    errordoc_405_path   resb 256
-    errordoc_404_path   resb 256
-    errordoc_403_path   resb 256
+
+    ; path handling
+    path                resb 256
+    file_to_serve       resq 1     ; pointer to path to serve, or 0 for none
+
+    ; error doc paths (built at startup from document_root + errordoc_*)
     errordoc_400_path   resb 256
-    log_port_buf        resb 8   ; "65535\n\0" worst case
+    errordoc_403_path   resb 256
+    errordoc_404_path   resb 256
+    errordoc_405_path   resb 256
+
+    ; misc
+    last_status         resw 1     ; for logs
+    content_length_b    resb 20
+    process_count       resb 1     ; current processes count
+    log_port_buf        resb 8     ; "65535\n\0" worst case
 
 section .text
     global _start
 
 
-; register usage (persistent across the loop):
+; register usage (persistent across the request handling):
 ;   r15 = server socket fd
 ;   r14 = client socket fd (per request)
-;   r13 = response buffer start (anchor)
-;   r12 = response buffer write position
+;   r13 = response buffer start (anchor) / client IP str (at .end, for logging)
+;   r12 = response buffer write position / last status code (at .end, for logging)
 ;   r11 = file fd (when serving a file)
 _start:
     
@@ -146,8 +155,9 @@ _start:
 
 
 .wait:  ; from here, we're NOT stopping the program anymore
-        ; accept(fd, sockaddr, addrlen) -> rax client fd (to use to write the resp)
-        ; blocks until a connection arrives
+    
+    ; accept(fd, sockaddr, addrlen) -> rax client fd (to use to write the resp)
+    ; blocks until a connection arrives
     mov rax, 43
     mov rdi, r15
     mov rsi, client_addr
