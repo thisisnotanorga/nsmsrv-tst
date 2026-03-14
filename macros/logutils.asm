@@ -12,11 +12,14 @@ section .data
     tm_buf  times 64 db 0     ; struct tm (libc)
 
     ; level prefixes
-    log_prefix_info     db "[INFO] ", 0
-    log_prefix_info_len equ $ - log_prefix_info - 1
+    log_prefix_info        db "[INFO] ", 0
+    log_prefix_info_len    equ $ - log_prefix_info - 1
 
-    log_prefix_err      db "[ERROR] ", 0
-    log_prefix_err_len  equ $ - log_prefix_err - 1
+    log_prefix_err         db "[ERROR] ", 0
+    log_prefix_err_len     equ $ - log_prefix_err - 1
+
+    log_prefix_warning     db "[WARNING] ", 0
+    log_prefix_warning_len equ $ - log_prefix_err - 1
 
     ; startup / fatal messages
     log_listening_port      db "Listening on port 80", 0
@@ -60,6 +63,9 @@ section .data
     log_status_200      db "200 OK", 0xa, 0
     log_status_200_len  equ $ - log_status_200 - 1
 
+    ; other messages
+    log_too_many_concurrent      db "Rejected request: too many concurrent requests", 0xa, 0
+    log_too_many_concurrent_len  equ $ - log_too_many_concurrent - 1
 
 ; macros
 
@@ -99,6 +105,15 @@ section .data
 %macro LOG_INFO 2
     PRINT_TIMESTAMP
     PRINT log_prefix_info, log_prefix_info_len
+    PRINTN %1, %2
+%endmacro
+
+; LOG_WARNING msg, len
+;   Prints: "HH:MM:SS [WARNING] <msg>\n"
+;   Clobbers: rax, rdi, rsi, rdx, rcx
+%macro LOG_WARNING 2
+    PRINT_TIMESTAMP
+    PRINT log_prefix_warning, log_prefix_warning_len
     PRINTN %1, %2
 %endmacro
 
