@@ -153,7 +153,7 @@ _start:
 
     IS_HTTP_REQUEST request, 1024
 
-    cmp rax, 0
+    cmp rax, 1
     je .get
 
     cmp rax, -405
