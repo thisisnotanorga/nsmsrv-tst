@@ -97,5 +97,28 @@
     jmp %%copy_loop
 
 %%parse_done:
+    ; preventing path traversals by cutting out '..' values
+    ; here, rdi is the output buffer, and r9 is the path length
+    xor r8, r8
+
+%%traversal_loop:
+    cmp r8, r9
+    jge %%path_ok
+
+    cmp byte [rdi + r8], '.'
+    jne %%traversal_next
+
+    cmp byte [rdi + r8 + 1], '.' ; [r8, r8 + 1], if both are '.', a path traversal is detected
+    je %%path_bad                ; <- traversal detected
+
+%%traversal_next:
+    inc r8
+    jmp %%traversal_loop
+
+%%path_bad:
+    xor r9 , r9 ; length = 0 if bad path
+
+%%path_ok:
     mov %4, r9
+
 %endmacro

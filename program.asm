@@ -28,10 +28,11 @@ section .data
     client_addr_len dd 16
 
     ; HTTP constants
-    crlf            db 0xd, 0xa, 0
+    crlf             db 0xd, 0xa, 0
 
     response_200     db "HTTP/1.0 200 OK", 0
     response_404     db "HTTP/1.0 404 Not Found", 0
+    response_403     db "HTTP/1.0 403 Forbidden", 0
     response_400     db "HTTP/1.0 400 Bad Request", 0
 
     connection_close db "Connection: close", 0
@@ -160,6 +161,9 @@ _start:
     lea rdi, [path + 1]
 
     PARSE_HTTP_PATH request, 1024, rdi, rcx
+    cmp rcx, 0 ; length will be zero if it contains a path traversal = 403
+    jle .forbidden
+
     mov byte [path + rcx + 1], 0    ; nul terminate the path
 
     ; if ends with '/', append "index.txt"
@@ -248,11 +252,26 @@ _start:
     mov word [last_status], 404
     jmp .send
 
+.forbidden:
+    lea r13, [response]
+    lea r12, [response]
+
+    mov rdi, 403
+    call .write_header
+
+    sub r12, r13
+
+    mov word [last_status], 403
+    jmp .send
+
 .write_header:
-    ; rdi: status code (200, 400, or 404)
+    ; rdi: status code (200, 400, 403, or 404)
     ; appends the HTTP header to the 'response' buffer
     cmp rdi, 404
     je .write_404
+
+    cmp rdi, 403
+    je .write_403
 
     cmp rdi, 400
     je .write_400
@@ -261,6 +280,11 @@ _start:
 
 .write_404:
     AAPPEND r12, response_404
+    AAPPEND r12, crlf
+    jmp .write_common_headers
+
+.write_403:
+    AAPPEND r12, response_403
     AAPPEND r12, crlf
     jmp .write_common_headers
 
