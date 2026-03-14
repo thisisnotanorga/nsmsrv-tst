@@ -235,8 +235,36 @@ _start:
 
     FILE_EXISTS rdi
 
-    cmp rax, 0
+    cmp rax, 0     ; does not exist
     je .not_found
+
+    cmp rax, 1     ; exists and is a readable file
+    je .ok
+
+    cmp rax, 2     ; is a dir
+    je .add_slash
+
+    ; 3 = exists but we can't read it
+    ; but we're just not checking it to fallback to forbidden
+    jmp .forbidden
+
+.add_slash:
+    lea rdi, [path]
+
+.find_path_end:
+    cmp byte [rdi], 0
+    je .add_slash_2
+
+    inc rdi
+    jmp .find_path_end
+
+.add_slash_2:
+    mov byte [rdi], '/'
+
+    inc rdi                ; rdi now points past the slash (= where index_file goes)
+    lea rsi, [index_file]
+    
+    jmp .add_index
 
 .ok:
     lea r13, [response]
@@ -409,8 +437,8 @@ _start:
     jz .end
 
     FILE_EXISTS r10
-    cmp rax, 0
-    je .end                   ; file doesn't exist, just send headers
+    cmp rax, 1
+    jne .end                   ; file doesn't exist, just send headers
 
     ; open the file
     mov rdi, r10
