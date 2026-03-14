@@ -5,28 +5,71 @@ section .bss
 
 
 ; FILE_EXISTS path
-;   Checks whether a file exists on disk.
+;   Checks whether a path exists and what it is.
 ;   Args:
 ;     %1: null-terminated path
 ;   Returns:
-;     rax = 1 if exists, 0 otherwise
+;     rax = 1  if exists and is a regular file
+;     rax = 2  if exists and is a directory
+;     rax = 3  if exists but is not readable
+;     rax = 0  if does not exist
 ;   Clobbers: rax, rdi, rsi
 %macro FILE_EXISTS 1
-    mov rax, 21     ; sys_access
+    push rdi
+    push rsi
+
+    ; stat(path, buffer)
+    mov rax, 4
     mov rdi, %1
-    mov rsi, 0      ; F_OK
+    lea rsi, [stat]
+
     syscall
 
     cmp rax, 0
-    je %%exists
+    jl %%not_found       ; stat failed = doesn't exist
 
-    mov rax, 0
+    ; check st_mode at offset 24, mask the file type bits
+    mov rax, [stat + 24]  
+    and rax, 0xF000
+
+    cmp rax, 0x8000      ; S_IFREG
+    je %%is_file
+
+    cmp rax, 0x4000      ; S_IFDIR
+    je %%is_dir
+
+    ; exists but some other obscure type, just continue
+
+%%is_file:
+    ; next check read permission 
+
+    ; access(path, R_OK)
+    mov rax, 21          ; sys_access
+    mov rdi, %1
+    mov rsi, 4           ; R_OK
+
+    syscall
+
+    cmp rax, 0
+    jne %%not_readable
+
+    mov rax, 1           ; exists, is a file, is readable
     jmp %%done
 
-%%exists:
-    mov rax, 1
+%%is_dir:
+    mov rax, 2           ; exists, is a directory
+    jmp %%done
+
+%%not_readable:
+    mov rax, 3           ; exists but not readable
+    jmp %%done
+
+%%not_found:
+    mov rax, 0           ; does not exist
 
 %%done:
+    pop rsi
+    pop rdi
 %endmacro
 
 ; FILE_SIZE path, out_reg
