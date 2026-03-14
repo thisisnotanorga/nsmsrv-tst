@@ -22,7 +22,7 @@ section .data
     log_prefix_warning_len equ $ - log_prefix_warning - 1
 
     ; startup / fatal messages
-    log_listening_port      db "Listening on port 80", 0
+    log_listening_port      db "Listening on port ", 0
     log_listening_port_len  equ $ - log_listening_port - 1
 
     log_fail_socket         db "Failed to open socket", 0

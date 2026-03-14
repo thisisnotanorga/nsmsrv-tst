@@ -11,12 +11,9 @@ section .data
 
     ; things you might want to configure
 
-    ; socket setup
-    sockaddr:
-        dw 2                               ; AF_INET (ipv4)
-        dw 0x5000                          ; port 80 big-endian
-        dd 0                               ; 0.0.0.0 = listen on all interfaces
-        dq 0                               ; padding
+    ; network conf
+    port        dw 80               ; port number (host byte order)
+    interface   dd 0                ; 0 = 0.0.0.0, or e.g. 0x0100007f = 127.0.0.1
 
     ; server conf
     document_root  db "/var/www/html", 0   ; document root, no trailing slash !
@@ -33,7 +30,14 @@ section .data
 
     ; end of the things might want to configure
 
-    sockopt         dd 1    ; value for SO_REUSEADDR
+    ; socket setup
+    sockaddr:
+        dw 2               ; AF_INET (ipv4)
+        dw 0x5000          ; port 80 big-endian                  (edited at runtime)
+        dd 0               ; 0.0.0.0 = listen on all interfaces  (edited at runtime)
+        dq 0               ; padding
+
+    sockopt         dd 1   ; value for SO_REUSEADDR
     client_addr_len dd 16
 
     ; HTTP constants
@@ -63,6 +67,7 @@ section .bss
     errordoc_404_path   resb 256
     errordoc_403_path   resb 256
     errordoc_400_path   resb 256
+    log_port_buf        resb 8   ; "65535\n\0" worst case
 
 section .text
     global _start
@@ -75,6 +80,14 @@ section .text
 ;   r12 = response buffer write position
 ;   r11 = file fd (when serving a file)
 _start:
+    
+    ; build sockaddr from port/interface
+    movzx eax, word [port]
+    xchg al, ah                 ; htons(), swap bytes for big-endian
+    mov word [sockaddr + 2], ax
+
+    mov eax, [interface]
+    mov dword [sockaddr + 4], eax
 
     ; socket(domain, type, protocol)
     mov rax, 41
@@ -116,7 +129,15 @@ _start:
     mov rsi, max_conns
     syscall
 
-    LOG_INFO log_listening_port, log_listening_port_len
+    ; this mess prints the port log
+    PRINT log_prefix_info, log_prefix_info_len
+    PRINT log_listening_port, log_listening_port_len
+
+    ; port int to ascii
+    movzx rbx, word [port]
+    ITOA rbx, log_port_buf, r9
+
+    PRINTN log_port_buf, r9
 
     BUILDPATH errordoc_405_path, document_root, errordoc_405
     BUILDPATH errordoc_404_path, document_root, errordoc_404
