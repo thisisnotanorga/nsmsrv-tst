@@ -45,14 +45,21 @@ section .data
     log_arrow           db " -> ", 0
     log_arrow_len       equ $ - log_arrow - 1
 
-    log_status_200      db "200 OK", 0xa, 0
-    log_status_200_len  equ $ - log_status_200 - 1
+    log_status_405      db "405 Method Not Allowed", 0xa, 0
+    log_status_405_len  equ $ - log_status_405 - 1
+
+    log_status_404      db "404 Not Found", 0xa, 0
+    log_status_404_len  equ $ - log_status_404 - 1
+
+    log_status_403      db "403 Forbidden", 0xa, 0
+    log_status_403_len  equ $ - log_status_403 - 1
 
     log_status_400      db "400 Bad Request", 0xa, 0
     log_status_400_len  equ $ - log_status_400 - 1
 
-    log_status_404      db "404 Not Found", 0xa, 0
-    log_status_404_len  equ $ - log_status_404 - 1
+    log_status_200      db "200 OK", 0xa, 0
+    log_status_200_len  equ $ - log_status_200 - 1
+
 
 ; macros
 
@@ -113,24 +120,53 @@ section .data
 ;   Clobbers: rax, rdi, rsi, rdx, rcx
 %macro LOG_REQUEST 3
     PRINT_TIMESTAMP
+
     PRINT log_prefix_info, log_prefix_info_len
     PRINT log_request_pre, log_request_pre_len
+
     STRLEN %3, rcx
     PRINT %3, rcx
+
     PRINT log_thing, log_thing_len
+
     STRLEN %1, rcx
+
     PRINT %1, rcx
     PRINT log_arrow, log_arrow_len
+
+    cmp %2, 405
+    je %%s405
+
     cmp %2, 404
     je %%s404
+
+    cmp %2, 403
+    je %%s403
+
     cmp %2, 400
     je %%s400
-    PRINT log_status_200, log_status_200_len
+
+    jmp %%s200
+
+%%s405:
+    PRINT log_status_405, log_status_405_len
     jmp %%done
+
 %%s404:
     PRINT log_status_404, log_status_404_len
     jmp %%done
+
+%%s403:
+    PRINT log_status_403, log_status_403_len
+    jmp %%done
+
 %%s400:
     PRINT log_status_400, log_status_400_len
+    jmp %%done
+
+%%s200:
+    PRINT log_status_200, log_status_200_len
+
+
 %%done:
 %endmacro
