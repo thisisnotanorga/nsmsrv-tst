@@ -18,9 +18,16 @@ section .data
         dd 0                              ; 0.0.0.0 = listen on all interfaces
         dq 0                              ; padding
 
+    ; server conf
     index_file    db "index.html", 0      ; default file if a directory is fetched (eg / becomes internally /index.txt)
     max_conns     equ 20                  ; max simultaneous connections / threads (max is 255)
     server_name   db "NASMServer/1.0", 0  ; the server name
+
+    ; errordocs files
+    errordoc_405  db "./errordocs/405.html", 0
+    errordoc_404  db "./errordocs/404.html", 0
+    errordoc_403  db "./errordocs/403.html", 0
+    errordoc_400  db "./errordocs/400.html", 0
 
     ; end of the things might want to configure
 
@@ -48,7 +55,8 @@ section .bss
     last_status         resw 1    ; for logs
     client_ip_str       resb 16   ; "255.255.255.255\0"
     content_length_b    resb 20
-    process_count       resb 1    ; current processes count 
+    process_count       resb 1    ; current processes count
+    file_to_serve       resq 1    ; pointer to path to serve, or 0 for none
 
 section .text
     global _start
@@ -230,44 +238,24 @@ _start:
     cmp rax, 0
     je .not_found
 
-.send_response:
-    lea r13, [response]     ; anchor, won't move
-    lea r12, [response]     ; write cursor
+.ok:
+    lea r13, [response]
+    lea r12, [response]
+    lea r10, [path]
+    mov [file_to_serve], r10
 
     mov rdi, 200
     call .write_header
 
-    ; send the header first
     sub r12, r13
-    PRINTF r14, r13, r12
-
-    ; open the file
-    lea rdi, [path]
-    OPEN_FILE rdi
-
-    cmp rax, 0
-    jl .end             ; shouldn't happen cuz FILE_EXISTS passed, but just in case
-    mov r11, rax        ; r11 = file fd
-
-    ; sendfile(out_fd, in_fd, offset=NULL, count=big)
-    mov rax, 40
-    mov rdi, r14        ; client socket
-    mov rsi, r11        ; file fd
-    xor rdx, rdx        ; offset = NULL (start from beginning)
-    mov r10, 0x7fffffff ; send as much as possible
-    syscall
-
-    ; close the file fd
-    mov rax, 3
-    mov rdi, r11
-    syscall
 
     mov word [last_status], 200
-    jmp .end
+    jmp .send
 
 .method_not_allowed:
     lea r13, [response]
     lea r12, [response]
+    mov qword [file_to_serve], errordoc_405
 
     mov rdi, 405
     call .write_header
@@ -280,6 +268,8 @@ _start:
 .not_found:
     lea r13, [response]
     lea r12, [response]
+    mov qword [file_to_serve], errordoc_404
+
 
     mov rdi, 404
     call .write_header
@@ -292,6 +282,7 @@ _start:
 .forbidden:
     lea r13, [response]
     lea r12, [response]
+    mov qword [file_to_serve], errordoc_403
 
     mov rdi, 403
     call .write_header
@@ -304,6 +295,7 @@ _start:
 .bad_request:
     lea r13, [response]
     lea r12, [response]
+    mov qword [file_to_serve], errordoc_400
 
     mov rdi, 400
     call .write_header
@@ -362,7 +354,7 @@ _start:
 
 .header_content_type:
     ; content type detection
-    lea rdi, [path]
+    mov rdi, [file_to_serve]
     GET_MIME_TYPE rdi, rbx ; content type will be in rsi
 
     mov rdi, rbx ; aappend doesn't clobbers rdi
@@ -372,7 +364,7 @@ _start:
 
 .header_content_length:
     ; very similar to the previous one
-    lea rdi, [path]
+    mov rdi, [file_to_serve]
     FILE_SIZE rdi, rbx
 
     cmp rbx, 0   ; rbx < 0 means that it failed, skipping header
@@ -409,7 +401,37 @@ _start:
     ret
 
 .send:
-    PRINTF r14, r13, r12
+    PRINTF r14, r13, r12    ; send the headers first
+
+    ; serve the file if one was set
+    mov r10, [file_to_serve]  
+    test r10, r10
+    jz .end
+
+    FILE_EXISTS r10
+    cmp rax, 0
+    je .end                   ; file doesn't exist, just send headers
+
+    ; open the file
+    mov rdi, r10
+    OPEN_FILE rdi
+
+    cmp rax, 0
+    jl .end                   ; shouldn't happen cuz FILE_EXISTS passed, but just in case
+    mov r11, rax              ; r11 = file fd
+
+    ; sendfile(out_fd, in_fd, offset=NULL, count=big)
+    mov rax, 40
+    mov rdi, r14              ; client socket
+    mov rsi, r11              ; file fd
+    xor rdx, rdx              ; offset = NULL (start from beginning)
+    mov r10, 0x7fffffff       ; send as much as possible
+    syscall
+
+    ; close the file fd
+    mov rax, 3
+    mov rdi, r11
+    syscall
 
 .end:
     ; shutdown(fd, SHUT_WR=1)
