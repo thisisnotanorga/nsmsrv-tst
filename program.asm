@@ -18,7 +18,7 @@ section .data
         dd 0            ; 0.0.0.0 = listen on all interfaces
         dq 0            ; padding
 
-    index_file    db "index.html", 0                 ; default file if a directory is fetched (eg / becomes internally /index.txt)   
+    index_file    db "index.html", 0                 ; default file if a directory is fetched (eg / becomes internally /index.txt)
     max_conns     equ 5                              ; max connections to queue before starting to reject them
     http_server   db "Server: NASMServer/1.0", 0     ; the server name
 
@@ -28,24 +28,25 @@ section .data
     client_addr_len dd 16
 
     ; HTTP constants
-    crlf             db 0xd, 0xa, 0
+    crlf                    db 0xd, 0xa, 0
 
-    response_405     db "HTTP/1.0 405 Method Not Allowed", 0
-    response_404     db "HTTP/1.0 404 Not Found", 0
-    response_403     db "HTTP/1.0 403 Forbidden", 0
-    response_400     db "HTTP/1.0 400 Bad Request", 0
-    response_200     db "HTTP/1.0 200 OK", 0
+    response_405            db "HTTP/1.0 405 Method Not Allowed", 0
+    response_404            db "HTTP/1.0 404 Not Found", 0
+    response_403            db "HTTP/1.0 403 Forbidden", 0
+    response_400            db "HTTP/1.0 400 Bad Request", 0
+    response_200            db "HTTP/1.0 200 OK", 0
 
-
-    connection_close db "Connection: close", 0
+    content_length_header   db "Content-Length: ", 0
+    connection_close_header db "Connection: close", 0
 
 section .bss
-    request       resb 1024
-    response      resb 1024
-    client_addr   resb 16
-    path          resb 256  ; should be enough for now
-    last_status   resw 1    ; for logs
-    client_ip_str resb 16   ; "255.255.255.255\0"
+    request             resb 1024
+    response            resb 1024
+    client_addr         resb 16
+    path                resb 256  ; should be enough for now
+    last_status         resw 1    ; for logs
+    client_ip_str       resb 16   ; "255.255.255.255\0"
+    content_length_b    resb 20
 
 section .text
     global _start
@@ -251,7 +252,7 @@ _start:
     mov word [last_status], 405
     jmp .send
 
-.not_found: 
+.not_found:
     lea r13, [response]
     lea r12, [response]
 
@@ -308,40 +309,58 @@ _start:
 .write_405:
     AAPPEND r12, response_405
     AAPPEND r12, crlf
-    jmp .write_common_headers
+    jmp .header_http_server
 
 .write_404:
     AAPPEND r12, response_404
     AAPPEND r12, crlf
-    jmp .write_common_headers
+    jmp .header_http_server
 
 .write_403:
     AAPPEND r12, response_403
     AAPPEND r12, crlf
-    jmp .write_common_headers
+    jmp .header_http_server
 
 .write_400:
     AAPPEND r12, response_400
     AAPPEND r12, crlf
-    jmp .write_common_headers
+    jmp .header_http_server
 
 .write_200:
     AAPPEND r12, response_200
     AAPPEND r12, crlf
 
-.write_common_headers:
+.header_http_server:
     AAPPEND r12, http_server
     AAPPEND r12, crlf
-    
+
+.header_content_type:
     ; content type detection
     lea rdi, [path]
     GET_MIME_TYPE rdi, rbx ; content type will be in rsi
 
-    mov rdi, rbx ; aappend doesnt clobbers rdi
+    mov rdi, rbx ; aappend doesn't clobbers rdi
     AAPPEND r12, rdi
 
     AAPPEND r12, crlf
-    AAPPEND r12, connection_close
+
+.header_content_length:
+    ; very similar to the previous one
+    lea rdi, [path]
+    FILE_SIZE rdi, rbx
+
+    cmp rbx, 0   ; rbx < 0 means that it failed, skipping header
+    jl .header_conn_close
+
+    ITOA rbx, content_length_b, rcx
+
+    AAPPEND r12, content_length_header
+    AAPPEND r12, content_length_b
+    AAPPEND r12, crlf
+
+
+.header_conn_close:
+    AAPPEND r12, connection_close_header
     AAPPEND r12, crlf
     AAPPEND r12, crlf   ; blank line = end of headers
     ret
@@ -391,7 +410,7 @@ _start:
 
     movzx r12, word [last_status] ; Move byte to word with zero-extension
     lea r13, [client_ip_str] ; using r12 and r13 to not get it clobbered, shouldnt be a problem since they will be replaced next iteration
-    LOG_REQUEST path, r12, r13 
+    LOG_REQUEST path, r12, r13
 
     add rsp, 16
     EXIT 0 ; child exits

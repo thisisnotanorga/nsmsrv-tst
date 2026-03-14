@@ -1,5 +1,9 @@
 ; fileutils.asm - File operation macros for x86_64 Linux
 
+section .bss
+    stat resb 144   ; struct stat is 144 bytes on x86_64 linux (for content length)
+
+
 ; FILE_EXISTS path
 ;   Checks whether a file exists on disk.
 ;   Args:
@@ -23,6 +27,36 @@
     mov rax, 1
 
 %%done:
+%endmacro
+
+; FILE_SIZE path, out_reg
+;   Gets the size of a file in bytes.
+;   Args:
+;     %1: null-terminated path
+;     %2: register to store the size (-1 on error)
+;   Clobbers: rax, rdi, rsi
+%macro FILE_SIZE 2
+    push rdi
+    push rsi
+
+    ; stat(path, buffer)
+    mov rax, 4
+    mov rdi, %1
+    lea rsi, [stat]
+    syscall
+
+    cmp rax, 0
+    jl %%fail
+
+    mov %2, [stat + 48] ; st_size is at offset 48 in struct stat
+    jmp %%done
+
+%%fail:
+    mov %2, -1
+
+%%done:
+    pop rsi
+    pop rdi
 %endmacro
 
 ; READ_FILE fd, buffer, length
