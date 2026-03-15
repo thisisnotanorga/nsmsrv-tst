@@ -5,6 +5,7 @@
 !.gitignore
 !/www/**
 !/.github/**
+!/releases.txt
 
 # Allow directories themselves to be traversed
 !*/

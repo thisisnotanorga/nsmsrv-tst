@@ -1,0 +1,28 @@
+# Custom Release File Format
+#
+# - Lines starting with '#' are comments.
+# - Releases are listed in descending order, with the latest release first.
+# - Each release follows this structure:
+#
+#   =--- release-name ---=
+#   Release description
+#   Can span multiple lines
+#   =--- END ---=
+#
+# Details:
+# - release-name: the name of the release
+# - Release description: detailed information about the release
+# - =--- END ---=: marks the end of the release 
+
+=--- v1.0 ---=
+### What changed
+- Static file serving from a configurable document root
+- MIME type detection (70+ types)
+- Per-request `fork()`-based concurrency with a configurable cap (`MAX_REQUESTS`)
+- Custom error pages for 400, 403, 404, and 405
+- `.env`-based configuration with defaults for all keys
+- Path traversal protection (`..` detection)
+- Directory requests automatically resolve to the configured index file
+- Startup validation (document root existence/permissions, errordoc paths, port privileges)
+- Request logging with client IP, path, and status code
+=--- END ---=
