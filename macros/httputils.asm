@@ -67,10 +67,11 @@
 ;   Args:
 ;     %1: buffer address
 ;     %2: buffer length
-;     %3: output buffer for path (must be >= 256 bytes)
+;     %3: output buffer for path
 ;     %4: register to store path length (0 if nothing extracted)
+;     %5: path max length
 ;   Clobbers: rax, rsi, rdi, rcx, r8, r9
-%macro PARSE_HTTP_PATH 4
+%macro PARSE_HTTP_PATH 5
     xor %4, %4   ; default path length = 0
     mov rsi, %1
     mov rdi, %3
@@ -102,14 +103,19 @@
 %%copy_loop:
     cmp r8, rcx
     jge %%parse_done
+
     mov al, [rsi + r8]
     cmp al, 0x20        ; space = end of path (HTTP/version follows)
+
     je %%parse_done
     mov [rdi + r9], al
+
     inc r8
     inc r9
-    cmp r9, 255         ; sanity check, max path length
+
+    cmp r9, %5          ; sanity check, max path length
     jge %%parse_done
+    
     jmp %%copy_loop
 
 %%parse_done:

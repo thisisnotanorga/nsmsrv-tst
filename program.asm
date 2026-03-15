@@ -253,20 +253,26 @@ _start:
 
 .copy_docroot_done:
     lea rax, [path]
-    sub rdi, rax                             ; rdi = docroot length
-    mov rbx, rdi                             ; rbx = docroot length for offsetting
+    sub rdi, rax                                  ; rdi = docroot length
+    mov rbx, rdi                                  ; rbx = docroot length for offsetting
+
+    cmp rbx, 255
+    jge .forbidden                                ; if docroot alone is >= 255, there's no room for any path
+
+    mov r10, 255
+    sub r10, rbx                                  ; rcx = 255 - docroot_len = remaining space
 
     lea rdi, [path + rbx]
-    PARSE_HTTP_PATH request, 1024, rdi, rcx  ; parse path into [path + docroot_len]
+    PARSE_HTTP_PATH request, 1024, rdi, rax, r10  ; parse path into [path + docroot_len]
 
-    cmp rcx, 0
+    cmp rax, 0
     jle .forbidden
 
-    add rcx, rbx                             ; full length = docroot + http path
+    add rax, rbx                                  ; full length = docroot + http path
 
-    mov byte [path + rcx + 1], 0
+    mov byte [path + rax + 1], 0
 
-    cmp byte [path + rcx], '/'
+    cmp byte [path + rax], '/'
     jne .check_exists
 
 .add_index:
