@@ -1,6 +1,7 @@
 # NASMServer
 
-An HTTP/1.0 server written in [NetWide Assembler](https://nasm.us/), by [Douxx](https://douxx.tech).
+An HTTP/1.0 server written in [NetWide Assembler](https://nasm.us/), by [Douxx](https://douxx.tech).  
+Read the [blog article](https://none.com)!
 
 > [!CAUTION] 
 > **Educational project**: This server likely has more security flaws than there are stars in the universe. It is **not recommended for production use**. Use it to learn, experiment, or have fun.
