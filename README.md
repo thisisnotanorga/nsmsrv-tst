@@ -65,7 +65,7 @@ Copy `.env.example` to `.env` and edit as needed. All keys are optional, and def
 | `ERRORDOC_404` | *(empty)* | Same, for 404 |
 | `ERRORDOC_405` | *(empty)* | Same, for 405 |
 
-If an `ERRORDOC_*` is left empty, the server sends headers only with no body for that error. Missing errordoc files produce a startup warning but are not fatal.
+If an `ERRORDOC_*` is left empty, the server sends headers only with no body for that error. Unresistant errordoc files produce a startup warning but are not fatal.
 
 ## Notes
 
