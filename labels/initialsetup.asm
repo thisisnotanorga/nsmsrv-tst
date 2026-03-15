@@ -1,21 +1,21 @@
 section .data
-    env_path          db ".env", 0
-    
+    env_path              db ".env", 0
+
     ; keys & defaults if no .env is provided or found
-    key_port          db "PORT", 0
-    default_port      db "80", 0
-    
-    key_docroot       db "DOCUMENT_ROOT", 0   ; document root, no trailing slash !
-    default_docroot   db ".", 0
+    key_port              db "PORT", 0
+    default_port          db "80", 0
 
-    key_index         db "INDEX_FILE", 0      ; default file if a directory is fetched (eg '/' becomes internally '/index.txt')
-    default_index     db "index.html", 0
+    key_docroot           db "DOCUMENT_ROOT", 0   ; document root, no trailing slash !
+    default_docroot       db ".", 0
 
-    key_maxconns      db "MAX_REQUESTS", 0    ; max concurrent requests (and threads)
-    default_maxconns  db "20", 0
+    key_index             db "INDEX_FILE", 0      ; default file if a directory is fetched (eg '/' becomes internally '/index.txt')
+    default_index         db "index.html", 0
 
-    key_name          db "SERVER_NAME", 0     ; server name provided in the response headers
-    default_name      db "NASMServer/1.0", 0   
+    key_maxconns          db "MAX_REQUESTS", 0    ; max concurrent requests (and threads)
+    default_maxconns      db "20", 0
+
+    key_name              db "SERVER_NAME", 0     ; server name provided in the response headers
+    default_name          db "NASMServer/1.0", 0
 
     ; errordocs files, relatively to the document_root (empty = none)
     ; start them with a slash !
@@ -31,29 +31,34 @@ section .data
     default_errordoc_400  db "", 0
 
 section .bss
-    ; config (loaded from .env at startup
-    env_path_buf    resb 256  
-    port_str_buf    resb 8    ; ascii port from .env before ATOI
-    port            resw 1    ; port number (host byte order)
-    interface       resd 1    ; 0 = 0.0.0.0
-    max_conns       resb 1    ; max simultaneous connections (max 255)
-    document_root   resb 256  ; document root, no trailing slash !
-    index_file      resb 64   ; default index file
-    server_name     resb 64   ; Server: header value
-    errordoc_405    resb 128  ; relative to document_root, start with /
-    errordoc_404    resb 128
-    errordoc_403    resb 128
-    errordoc_400    resb 128
+    ; config (loaded from .env at startup)
+    env_path_buf       resb 256
+    port_str_buf       resb 8    ; ascii port from .env before ATOI
+    port               resw 1    ; port number (host byte order)
+    interface          resd 1    ; 0 = 0.0.0.0
+    max_conns          resb 1    ; max simultaneous connections (max 255)
+    document_root      resb 256  ; document root, no trailing slash !
+    index_file         resb 64   ; default index file
+    server_name        resb 64   ; Server: header value
+    errordoc_405       resb 128  ; relative to document_root, start with /
+    errordoc_404       resb 128
+    errordoc_403       resb 128
+    errordoc_400       resb 128
 
     ; error doc paths (built at startup from document_root + errordoc_*)
-    errordoc_400_path   resb 256
-    errordoc_403_path   resb 256
-    errordoc_404_path   resb 256
-    errordoc_405_path   resb 256
+    errordoc_400_path  resb 256
+    errordoc_403_path  resb 256
+    errordoc_404_path  resb 256
+    errordoc_405_path  resb 256
 
 section .text
     global initial_setup
 
+; initial_setup
+;   Loads configuration from a .env file (or argv[1]) into BSS buffers.
+;   Populates: port, max_conns, document_root, index_file, server_name,
+;              errordoc_* paths, and sockaddr.
+;   Exits with code 1 if argv[1] was given but the file doesn't exist.
 initial_setup:
     cmp r15, 2
     jl .use_default
@@ -86,7 +91,7 @@ initial_setup:
 
     inc r14
     inc rcx
-    
+
     test al, al
     jnz .copy_default
 
@@ -118,7 +123,7 @@ initial_setup:
     mov word [sockaddr + 2], ax
 
     mov eax, [interface]
-    mov dword [sockaddr + 4], eax
+    mov dword [sockaddr + 4], eax  
 
     ; build errordoc full paths (document_root + errordoc_*)
     BUILDPATH errordoc_405_path, document_root, errordoc_405
