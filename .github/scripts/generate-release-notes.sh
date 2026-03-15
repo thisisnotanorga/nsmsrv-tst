@@ -18,17 +18,9 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
         cat "$DESCRIPTION_FILE"
     fi
     echo ""
-    echo "### Requirements"
-    echo ""
-    echo "**Requirements:** \`nasm\` \`binutils\`"
-    echo ""
     echo "### Updating to this version"
     echo ""
-    echo "To update to this version, run the following command:"
-    echo ""
-    echo '```bash'
-    echo "bw-update --to $VERSION"
-    echo '```'
+    echo "To update to this version, update your existing binaries and configuration files."
     echo ""
 
     if [ -n "$PREVIOUS_COMMIT" ]; then
