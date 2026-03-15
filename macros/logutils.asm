@@ -42,6 +42,9 @@ section .data
     log_startup_ok_len              equ $ - log_startup_ok - 1
 
     ; startup / fatal messages
+    log_fail_read_env       db "Failed to read the provided configuration file path", 0
+    log_fail_read_env_len   equ $ - log_fail_read_env - 1
+
     log_listening_port       db "Listening on port ", 0
     log_listening_port_len   equ $ - log_listening_port - 1
 

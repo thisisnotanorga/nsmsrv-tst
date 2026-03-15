@@ -60,18 +60,22 @@ section .text
     global _start
 
 
-; register usage (persistent across the request handling):
+; register usage, after startup (persistent across the request handling):
 ;   r15 = server socket fd
 ;   r14 = client socket fd (per request)
 ;   r13 = response buffer start (anchor) / client IP str (at .end, for logging)
 ;   r12 = response buffer write position / last status code (at .end, for logging)
 ;   r11 = file fd (when serving a file)
+
 _start:
     PRINTN log_started_nasmserver, log_started_nasmserver_len
 
-    call initial_setup  ; from labels/initialsetup.asm
+    mov r15, [rsp]       ; argc
+    mov r14, [rsp + 16]  ; eventual argv[1]
 
-    call startup_checks ; from labels/startupchecks.asm
+    call initial_setup   ; from labels/initialsetup.asm
+
+    call startup_checks  ; from labels/startupchecks.asm
 
 .start_server:
     ; socket(domain, type, protocol)
@@ -122,7 +126,7 @@ _start:
 
     ; port int to ascii
     movzx rbx, word [port]
-    
+
     ITOA rbx, log_port_buf, r9
     PRINTN log_port_buf, r9
 

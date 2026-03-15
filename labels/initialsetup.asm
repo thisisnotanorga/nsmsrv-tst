@@ -32,10 +32,11 @@ section .data
 
 section .bss
     ; config (loaded from .env at startup
-    port_str_buf    resb 8     ; ascii port from .env before ATOI
+    env_path_buf    resb 256  
+    port_str_buf    resb 8    ; ascii port from .env before ATOI
     port            resw 1    ; port number (host byte order)
     interface       resd 1    ; 0 = 0.0.0.0
-    max_conns       resb 1     ; max simultaneous connections (max 255)
+    max_conns       resb 1    ; max simultaneous connections (max 255)
     document_root   resb 256  ; document root, no trailing slash !
     index_file      resb 64   ; default index file
     server_name     resb 64   ; Server: header value
@@ -54,24 +55,60 @@ section .text
     global initial_setup
 
 initial_setup:
+    cmp r15, 2
+    jl .use_default
+
+    FILE_EXISTS r14
+    cmp rax, 1
+    jne .failed_read_file
+
+    lea rcx, [env_path_buf]
+
+.copy_argv1:
+    mov al, [r14]
+    mov [rcx], al
+
+    inc r14
+    inc rcx
+
+    test al, al
+    jnz .copy_argv1
+
+    jmp .load_env
+
+.use_default:
+    lea r14, [env_path]
+    lea rcx, [env_path_buf]
+
+.copy_default:
+    mov al, [r14]
+    mov [rcx], al
+
+    inc r14
+    inc rcx
+    
+    test al, al
+    jnz .copy_default
+
+.load_env:
     ; load all config from .env (or fall back to defaults)
 
-    ENV_DEFAULT env_path, key_docroot, document_root, 256, default_docroot
-    ENV_DEFAULT env_path, key_index,   index_file,    64,  default_index
-    ENV_DEFAULT env_path, key_name,    server_name,   64,  default_name
+    ENV_DEFAULT env_path_buf, key_docroot, document_root, 256, default_docroot
+    ENV_DEFAULT env_path_buf, key_index,   index_file,    64,  default_index
+    ENV_DEFAULT env_path_buf, key_name,    server_name,   64,  default_name
 
-    ENV_DEFAULT env_path, key_errordoc_405, errordoc_405, 128, default_errordoc_405
-    ENV_DEFAULT env_path, key_errordoc_404, errordoc_404, 128, default_errordoc_404
-    ENV_DEFAULT env_path, key_errordoc_403, errordoc_403, 128, default_errordoc_403
-    ENV_DEFAULT env_path, key_errordoc_400, errordoc_400, 128, default_errordoc_400
+    ENV_DEFAULT env_path_buf, key_errordoc_405, errordoc_405, 128, default_errordoc_405
+    ENV_DEFAULT env_path_buf, key_errordoc_404, errordoc_404, 128, default_errordoc_404
+    ENV_DEFAULT env_path_buf, key_errordoc_403, errordoc_403, 128, default_errordoc_403
+    ENV_DEFAULT env_path_buf, key_errordoc_400, errordoc_400, 128, default_errordoc_400
 
     ; port: read as ascii, then convert to integer
-    ENV_DEFAULT env_path, key_port, port_str_buf, 8, default_port
+    ENV_DEFAULT env_path_buf, key_port, port_str_buf, 8, default_port
     ATOI port_str_buf, rax
     mov word [port], ax
 
     ; max_conns: same deal, byte is enough (max 255)
-    ENV_DEFAULT env_path, key_maxconns, port_str_buf, 8, default_maxconns  ; reuse port_str_buf, we're done with it
+    ENV_DEFAULT env_path_buf, key_maxconns, port_str_buf, 8, default_maxconns  ; reuse port_str_buf, we're done with it
     ATOI port_str_buf, rax
     mov byte [max_conns], al
 
@@ -90,3 +127,7 @@ initial_setup:
     BUILDPATH errordoc_400_path, document_root, errordoc_400
 
     ret
+
+.failed_read_file:
+    LOG_ERR log_fail_read_env, log_fail_read_env_len
+    EXIT 1
