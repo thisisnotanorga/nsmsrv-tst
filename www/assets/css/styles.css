@@ -1,0 +1,146 @@
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(../fonts/RobotoMono-Regular.ttf) format('truetype');
+    }
+
+:root {
+    --background-color: rgb(13, 13, 13);
+    --font-family: "Roboto Mono", monospace;
+    --primary-color: rgb(220, 220, 220);
+    --secondary-color: rgb(255, 154, 86);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--background-color);
+    font-family: var(--font-family);
+    color: var(--primary-color);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+main {
+    max-width: 660px;
+    width: 100%;
+}
+
+.ascii-header {
+    font-size: 0.5rem;
+    color: var(--secondary-color);
+    line-height: 1.2;
+    margin-bottom: 2.5rem;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.highlight {
+    color: var(--secondary-color);
+}
+
+.code-block {
+    background: rgb(20, 20, 20);
+    border: 1px solid rgba(220, 220, 220, 0.1);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    font-size: 0.82rem;
+    overflow-x: auto;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid rgba(220, 220, 220, 0.1);
+    margin: 2rem 0;
+}
+
+.link-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 3rem;
+    max-width: 400px;
+    margin-top: 1rem;
+}
+
+.link-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.link-col a {
+    color: var(--primary-color);
+    position: relative;
+    padding-left: 1.5em;
+    transition: color 0.15s ease;
+}
+
+.link-col a::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    transform: translateX(-0.5em);
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.link-col a:hover::before {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.link-col a:hover {
+    color: var(--secondary-color);
+}
+
+.sig {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: rgba(220, 220, 220, 0.3);
+}
+
+.dont-atk-me {
+    color: rgba(220,220,220,0.4);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1.5rem;
+        align-items: flex-start;
+        padding-top: 10vh;
+    }
+
+    .ascii-header {
+        font-size: 0.38rem;
+    }
+
+    .link-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
