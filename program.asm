@@ -503,23 +503,23 @@ _start:
 
     FILE_EXISTS r10
     cmp rax, 1
-    jne .end                    ; file doesn't exist, just send headers
+    jne .end                   ; file doesn't exist, just send headers
 
     ; open the file
     mov rdi, r10
     OPEN_FILE rdi
 
     cmp rax, 0
-    jl .end                     ; shouldn't happen cuz FILE_EXISTS passed, but just in case
-    mov r11, rax                ; r11 = file fd
+    jl .end                    ; shouldn't happen cuz FILE_EXISTS passed, but just in case
+    mov r11, rax               ; r11 = file fd
 
     ; stream the file directly from the fd to the client socket
     ; sendfile(out_fd, in_fd, offset, count)
     mov rax, 40
-    mov rdi, r14                ; client socket
-    mov rsi, r11                ; file fd
-    xor rdx, rdx                ; offset = NULL (start from beginning)
-    mov r10, 0x7fffffff         ; send as much as possible
+    mov rdi, r14               ; client socket
+    mov rsi, r11               ; file fd
+    xor rdx, rdx               ; offset = NULL (start from beginning)
+    mov r10, 0x7fffffff        ; send as much as possible
     syscall
 
     ; close(fd)
