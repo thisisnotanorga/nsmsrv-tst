@@ -21,10 +21,12 @@ startup_checks:
     EXIT 1
 
 .check_docroot_perms:
-    ; access(document_root, R_OK | X_OK)
+
+    ; check that document_root is readable and executable by the current process
+    ; access(path, mode)
     mov rax, 21
     lea rdi, [document_root]
-    mov rsi, 5
+    mov rsi, 5                ; R_OK | X_OK
     syscall
 
     cmp rax, 0
@@ -84,7 +86,7 @@ startup_checks:
 
     cmp rax, 1
     je .check_port
-    
+
     LOG_WARNING log_check_errordoc_missing, log_check_errordoc_missing_len
 
 .check_port:
