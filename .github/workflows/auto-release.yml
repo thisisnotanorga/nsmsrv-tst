@@ -28,7 +28,7 @@ jobs:
 
       - name: Install build dependencies
         if: steps.parse.outputs.new_release == 'true'
-        run: sudo apt-get install -y nasm binutils
+        run: sudo apt-get install -y nasm binutils patchelf
 
       - name: Build nasmserver binary
         if: steps.parse.outputs.new_release == 'true'
@@ -37,9 +37,12 @@ jobs:
           ./buildasm.sh program.asm
           mv program nasmserver
 
-      - name: Package www/
+      - name: Build bundles
         if: steps.parse.outputs.new_release == 'true'
-        run: cd www && zip -r ../www.zip .
+        run: |
+          chmod +x .github/scripts/build-bundle.sh
+          .github/scripts/build-bundle.sh x64
+          .github/scripts/build-bundle.sh aarch64
 
       - name: Generate release notes
         if: steps.parse.outputs.new_release == 'true'
@@ -58,8 +61,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            env.example
-            www.zip
-            nasmserver
+            nasmserver-linux-x64.zip
+            nasmserver-linux-aarch64.zip
+            
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

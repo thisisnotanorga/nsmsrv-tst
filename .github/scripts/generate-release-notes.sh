@@ -17,6 +17,13 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
     if [ -f "$DESCRIPTION_FILE" ]; then
         cat "$DESCRIPTION_FILE"
     fi
+    echo "### Downloads"
+    echo ""
+    echo "| File | Description |"
+    echo "|---|---|"
+    echo "| \`nasmserver-linux-x64.zip\` | Linux x86_64 self-contained bundle, no dependencies required |"
+    echo "| \`nasmserver-linux-aarch64.zip\` | Linux aarch64 (e.g. Raspberry Pi), runs via QEMU emulation, no dependencies required |"
+    echo ""
     echo ""
     echo "### Updating to this version"
     echo ""

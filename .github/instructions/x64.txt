@@ -1,0 +1,61 @@
+NASMServer - Linux x64 Bundle
+==============================
+
+This bundle includes everything needed to run NASMServer on a Linux x64 system
+without any additional dependencies.
+
+CONTENTS
+--------
+  nasmserver            - the server binary (pre-patched)
+  libs/                 - bundled runtime libraries
+  www/                  - default web directory
+  env.example           - example configuration file
+  instructions.txt      - this file
+
+IMPORTANT: do not move or delete the libs/ folder. The binary is patched to
+look for its runtime libraries there. Moving nasmserver out of the bundle
+without its libs/ folder will cause it to fail.
+
+
+INSTALLATION
+------------
+1. Extract the bundle to a directory of your choice
+
+2. Copy the example config:
+     cp env.example .env
+
+3. Make the binary executable:
+     chmod +x nasmserver
+
+4. Run it:
+     ./nasmserver
+
+
+CONFIGURATION
+-------------
+Edit .env to configure the server. All keys are optional.
+
+  PORT            Port to listen on (default: 8080)
+                  Note: ports below 1024 require root or CAP_NET_BIND_SERVICE.
+
+  DOCUMENT_ROOT   Path to the directory to serve files from (default: .)
+                  No trailing slash.
+
+  INDEX_FILE      File served when a directory is requested (default: index.html)
+
+  MAX_REQUESTS    Max simultaneous connections, 1-255 (default: 20)
+
+  SERVER_NAME     Value for the Server: response header (default: NASMServer/ver)
+
+  ERRORDOC_400    Path to a custom error page, relative to DOCUMENT_ROOT.
+  ERRORDOC_403    Must start with /. If left empty, headers only are sent.
+  ERRORDOC_404
+  ERRORDOC_405
+
+Note: .env must use LF line endings, not CRLF.
+
+To use a custom config file path instead of .env:
+  ./nasmserver -e /path/to/config.env
+
+For all supported flags:
+  ./nasmserver -h
