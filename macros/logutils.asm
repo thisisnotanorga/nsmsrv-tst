@@ -110,6 +110,7 @@ section .data
 
     log_help_text                   db "Usage: nasmserver [-h] [-e <config.env>]", 0xa, \
                                        "  -h              show this help", 0xa, \
+                                       "  -v              show the current version", 0xa, \
                                        "  -e <config>     path to the .env config file", 0xa, 0
     log_help_text_len               equ $ - log_help_text - 1
 

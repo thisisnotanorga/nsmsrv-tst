@@ -29,6 +29,9 @@ cp env.example .env
 
 # Or pass a custom config file as -e
 ./nasmserver -e /path/to/config.env
+
+# See all the supported flags
+./nasmserver -h
 ```
 
 > Ports below 1024 (including the default port 8080) require root or `CAP_NET_BIND_SERVICE`. Either run with `sudo`, or set `PORT` to something above 1024 in your `.env`.
