@@ -242,7 +242,7 @@ section .data
     push rsi
     push rdi
 
-    lea rsi, [%1]
+    mov rsi, [%1]
     lea rdi, [%2]
 
 %%loop:
