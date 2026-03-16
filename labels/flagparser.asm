@@ -54,8 +54,8 @@ parse_flags:
     je .is_e
 
     ; not a recognized flag, skip
-    inc rcx
-    jmp .next_arg
+    mov rsi, [rbp + 8 + 8 + rcx * 8]
+    jmp .arg_not_recognized
 
 .is_h:
     mov byte [flag_help], 1
@@ -131,6 +131,15 @@ parse_flags:
 .streq_not_equal:
     xor rax, rax
     ret
+
+.arg_not_recognized:
+    PRINT log_arg_not_recognized_p1, log_arg_not_recognized_p1_len
+
+    STRLEN rsi, rcx
+    PRINT rsi, rcx
+
+    PRINTN log_arg_not_recognized_p2, log_arg_not_recognized_p2_len
+    EXIT 1
 
 .done:
     ret

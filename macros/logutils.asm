@@ -92,6 +92,14 @@ section .data
     log_too_many_concurrent        db "Rejected request: too many concurrent requests", 0
     log_too_many_concurrent_len    equ $ - log_too_many_concurrent - 1
 
+    log_arg_not_recognized_p1      db "Argument '", 0
+    log_arg_not_recognized_p1_len  equ $ - log_arg_not_recognized_p1 - 1
+
+    log_arg_not_recognized_p2      db "' is not recognized by NASMServer.", 0xa, \
+                                      "Run nasmserver -h to see the list of available flags and arguments.", 0
+    log_arg_not_recognized_p2_len  equ $ - log_arg_not_recognized_p2 - 1
+
+
     log_help_text      db "Usage: nasmserver [-h] [-e <config.env>]", 0xa, \
                           "  -h              show this help", 0xa, \
                           "  -e <config>     path to the .env config file", 0xa, 0
