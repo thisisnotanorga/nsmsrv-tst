@@ -14,7 +14,7 @@
 # - Release description: detailed information about the release
 # - =--- END ---=: marks the end of the release 
 
-=--- vblblblblblblaba ---=
+=--- vblblblblblblabab ---=
 bblblblblblbl
 =--- END ---=
 

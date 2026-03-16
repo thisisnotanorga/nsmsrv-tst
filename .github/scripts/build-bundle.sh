@@ -43,17 +43,20 @@ elif [ "$ARCH" = "aarch64" ]; then
     cp qemu-x86_64-static "$BUNDLE_DIR/"
 
     # move the libs
-    cp /lib/x86_64-linux-gnu/libc.so.6 "$BUNDLE_DIR/libs/"
-    cp /lib64/ld-linux-x86-64.so.2 "$BUNDLE_DIR/libs/"
+    mkdir -p "$BUNDLE_DIR/libs/lib/x86_64-linux-gnu"
+    mkdir -p "$BUNDLE_DIR/libs/lib64"
+    cp /lib/x86_64-linux-gnu/libc.so.6 "$BUNDLE_DIR/libs/lib/x86_64-linux-gnu/"
+    cp /lib64/ld-linux-x86-64.so.2 "$BUNDLE_DIR/libs/lib64/"
 
     # patch the binary to use the provided libs
-    patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath '$ORIGIN/libs' "$BUNDLE_DIR/nasmserver-bin"
+    patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath /lib/x86_64-linux-gnu "$BUNDLE_DIR/nasmserver-bin"
+
 
     # nasmserver will be a bash script that autoruns the qemu + nasmserver-bin
     cat > "$BUNDLE_DIR/nasmserver" << 'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$DIR/qemu-x86_64-static" "$DIR/libs/ld-linux-x86-64.so.2" --library-path "$DIR/libs" "$DIR/nasmserver-bin" "$@"
+exec "$DIR/qemu-x86_64-static" -L "$DIR/libs" "$DIR/nasmserver-bin" "$@"
 EOF
 
 else
