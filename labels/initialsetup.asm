@@ -15,7 +15,7 @@ section .data
     default_maxconns      db "20", 0
 
     key_name              db "SERVER_NAME", 0     ; server name provided in the response headers
-    default_name          db "NASMServer/1.1", 0
+    default_name          db "NASMServer/", 0     ; version will be appended later
 
     ; errordocs files, relatively to the document_root (empty = none)
     ; start them with a slash !
@@ -39,6 +39,7 @@ section .bss
     max_conns          resb 1    ; max simultaneous connections (max 255)
     document_root      resb 256  ; document root, no trailing slash !
     index_file         resb 64   ; default index file
+    server_w_ver       resb 64   ; The default server with the version
     server_name        resb 64   ; Server: header value
     errordoc_405       resb 128  ; relative to document_root, start with /
     errordoc_404       resb 128
@@ -61,12 +62,17 @@ section .text
 ;   Exits with code 1 if -e was given but the file doesn't exist.
 ;   Exits with code 0 if the help was displayed (-h).
 initial_setup:
-    cmp byte [flag_help], 1   ; -h passed
+    call .build_server_name     ; first of all, build the server name with default_name + version
+
+    cmp byte [flag_help], 1     ; -h passed
     je .display_help
+
+    cmp byte [flag_version], 1  ; -v passed
+    je .display_version
 
     mov r14, [flag_env_path]
     test r14, r14
-    jz .use_default           ; -e not passed
+    jz .use_default             ; -e not passed
 
     FILE_EXISTS r14
     cmp rax, 1
@@ -105,7 +111,7 @@ initial_setup:
 
     ENV_DEFAULT env_path_buf, key_docroot, document_root, 256, default_docroot
     ENV_DEFAULT env_path_buf, key_index,   index_file,    64,  default_index
-    ENV_DEFAULT env_path_buf, key_name,    server_name,   64,  default_name
+    ENV_DEFAULT env_path_buf, key_name,    server_name,   64,  server_w_ver
 
     ENV_DEFAULT env_path_buf, key_errordoc_405, errordoc_405, 128, default_errordoc_405
     ENV_DEFAULT env_path_buf, key_errordoc_404, errordoc_404, 128, default_errordoc_404
@@ -138,10 +144,22 @@ initial_setup:
 
     ret
 
+.build_server_name:
+    lea r14, [server_w_ver]
+    AAPPEND r14, default_name
+    AAPPEND r14, version
+    ret
+
 .failed_read_file:
     LOG_ERR log_fail_read_env, log_fail_read_env_len
     EXIT 1
 
 .display_help:
     PRINTN log_help_text, log_help_text_len
+    EXIT 0
+
+.display_version:
+    PRINT log_version, log_version_len
+    STRLEN server_w_ver, rcx
+    PRINTN server_w_ver, rcx
     EXIT 0

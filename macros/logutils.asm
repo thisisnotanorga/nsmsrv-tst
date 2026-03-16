@@ -12,22 +12,19 @@ section .data
 
     ; log level prefixes
 
-    log_prefix_info             db "[INFO] ", 0
-    log_prefix_info_len         equ $ - log_prefix_info - 1
+    log_prefix_info                 db "[INFO] ", 0
+    log_prefix_info_len             equ $ - log_prefix_info - 1
 
-    log_prefix_warning          db "[WARNING] ", 0
-    log_prefix_warning_len      equ $ - log_prefix_warning - 1
+    log_prefix_warning              db "[WARNING] ", 0
+    log_prefix_warning_len          equ $ - log_prefix_warning - 1
 
-    log_prefix_err              db "[ERROR] ", 0
-    log_prefix_err_len          equ $ - log_prefix_err - 1
+    log_prefix_err                  db "[ERROR] ", 0
+    log_prefix_err_len              equ $ - log_prefix_err - 1
 
 
     ; startup banner
-    log_started_nasmserver db "Started the NASMServer static files HTTP server.", 0xa, \
-                            "https://github.com/douxxtech/nasmserver", \
-                            0xa, 0xa
-
-    log_started_nasmserver_len  equ $ - log_started_nasmserver
+    log_started_nasmserver          db "Started the NASMServer static files HTTP server.", 0xa, 0
+    log_started_nasmserver_len      equ $ - log_started_nasmserver - 1
 
 
     ; startup checks
@@ -114,8 +111,10 @@ section .data
     log_help_text                   db "Usage: nasmserver [-h] [-e <config.env>]", 0xa, \
                                        "  -h              show this help", 0xa, \
                                        "  -e <config>     path to the .env config file", 0xa, 0
-
     log_help_text_len               equ $ - log_help_text - 1
+
+    log_version                     db "Server version: ", 0
+    log_version_len                 equ $ - log_version - 1
 
 
 ; macros

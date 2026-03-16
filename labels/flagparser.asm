@@ -5,10 +5,12 @@
 section .data
     flag_str_h   db "-h", 0
     flag_str_e   db "-e", 0
+    flag_str_v   db "-v", 0
 
 section .bss
     flag_env_path  resq 1  ; pointer to env path string, or 0 if not set
     flag_help      resb 1  ; 1 if -h was passed
+    flag_version   resb 1  ; 1 if -v was passed
 
 
 section .text
@@ -23,6 +25,7 @@ parse_flags:
 
     mov qword [flag_env_path], 0  ; default: not set
     mov byte [flag_help], 0
+    mov byte [flag_version], 0
 
     cmp r15, 1                    ; argc = 1: no args passed
     je .done
@@ -30,31 +33,33 @@ parse_flags:
     mov rcx, 1                    ; current argv index
 
 .next_arg:
-    ; Note to self: always re-set rsi after every check
+    ; rbp + 16 + rcx * 8  =>  argv[rcx]
+    ; (rbp = rsp at entry, +16 skips argc and argv[0])
 
     cmp rcx, r15
     jge .done
 
-    mov rsi, [rbp + 8 + 8 + rcx * 8]  ; argv[rcx]  (rbp + saved rbp + saved ret addr)
 
     ; check -h
-    lea rdi, [flag_str_h]
-    call .streq
+    STREQ rbp + 16 + rcx * 8, flag_str_h, rax
 
     cmp rax, 1
     je .is_h
 
-    mov rsi, [rbp + 8 + 8 + rcx * 8]
-
     ; check -e
-    lea rdi, [flag_str_e]
-    call .streq
+    STREQ rbp + 16 + rcx * 8, flag_str_e, rax
 
     cmp rax, 1
     je .is_e
 
+    ; check -v
+    STREQ rbp + 16 + rcx * 8, flag_str_v, rax
+
+    cmp rax, 1
+    je .is_v
+
     ; not a recognized flag, skip
-    mov rsi, [rbp + 8 + 8 + rcx * 8]
+    mov rsi, [rbp + 16 + rcx * 8]
     jmp .arg_not_recognized
 
 .is_h:
@@ -85,15 +90,21 @@ parse_flags:
 
     jmp .next_arg
 
+.is_v:
+    mov byte [flag_version], 1
+    call .remove_arg
+
+    dec r15
+    jmp .next_arg
+
 .error_e:
     PRINTN log_flag_e_error, log_flag_e_error_len
     EXIT 1
 
-; .remove_arg
-;   Removes argv[rcx] by shifting argv[rcx+1..argc-1] left by one slot.
-;   Expects: rcx = index to remove, r15 = current argc
-;   Clobbers: rdx, rbx, rax
+
 .remove_arg:
+    ; Removes argv[rcx] by shifting argv[rcx+1..argc-1] left by one slot
+    ; Expects: rcx = index to remove, r15 = current argc
     mov rdx, rcx
 
 .shift_loop:
@@ -109,32 +120,6 @@ parse_flags:
     jmp .shift_loop
 
 .shift_done:
-    ret
-
-; .streq
-;   Compares null-terminated strings at rsi and rdi.
-;   Returns rax = 1 if equal, 0 otherwise.
-;   Clobbers: rax, rbx
-.streq:
-    mov al, [rsi]
-    mov bl, [rdi]
-
-    cmp al, bl
-    jne .streq_not_equal
-
-    test al, al
-    jz .streq_equal
-
-    inc rsi
-    inc rdi
-    jmp .streq
-
-.streq_equal:
-    mov rax, 1
-    ret
-
-.streq_not_equal:
-    xor rax, rax
     ret
 
 .arg_not_recognized:
