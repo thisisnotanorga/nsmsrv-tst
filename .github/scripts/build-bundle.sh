@@ -18,14 +18,20 @@ cp ".github/instructions/$ARCH.txt" "$BUNDLE_DIR/instructions.txt"
 
 if [ "$ARCH" = "x64" ]; then
     # move the bin to the bundle
-    cp nasmserver "$BUNDLE_DIR/nasmserver"
+    cp nasmserver "$BUNDLE_DIR/nasmserver-bin"
 
     # move the libs
     cp /lib/x86_64-linux-gnu/libc.so.6 "$BUNDLE_DIR/libs/"
     cp /lib64/ld-linux-x86-64.so.2 "$BUNDLE_DIR/libs/"
 
     # patch the binary to use the provided libs
-    patchelf --set-interpreter './ld-linux-x86-64.so.2' --set-rpath '$ORIGIN/libs' "$BUNDLE_DIR/nasmserver"
+    patchelf --set-interpreter /dummy --set-rpath '$ORIGIN/libs' "$BUNDLE_DIR/nasmserver-bin"
+
+    cat > "$BUNDLE_DIR/nasmserver" << 'EOF'
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$DIR/libs/ld-linux-x86-64.so.2" --library-path "$DIR/libs" "$DIR/nasmserver-bin" "$@"
+EOF
 
 
 elif [ "$ARCH" = "aarch64" ]; then
@@ -41,7 +47,7 @@ elif [ "$ARCH" = "aarch64" ]; then
     cp /lib64/ld-linux-x86-64.so.2 "$BUNDLE_DIR/libs/"
 
     # patch the binary to use the provided libs
-    patchelf --set-interpreter './ld-linux-x86-64.so.2' --set-rpath '$ORIGIN/libs' "$BUNDLE_DIR/nasmserver-bin"
+    patchelf --set-interpreter /dummy --set-rpath '$ORIGIN/libs' "$BUNDLE_DIR/nasmserver-bin"
 
     # nasmserver will be a bash script that autoruns the qemu + nasmserver-bin
     cat > "$BUNDLE_DIR/nasmserver" << 'EOF'
