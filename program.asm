@@ -15,6 +15,8 @@ extern inet_ntop ; to process the client IP address
 
 section .data
 
+    version db "1.1", 0
+
     ; socket setup
     sockaddr:
         dw 2       ; AF_INET (ipv4)
@@ -69,14 +71,15 @@ section .text
 ;   r11 = file fd (when serving a file)
 
 _start:
-    PRINTN log_started_nasmserver, log_started_nasmserver_len
-
     mov r15, [rsp]       ; argc
     call parse_flags     ; sets flag_* bytes, strips flags, etc. From labels/flagparser.asm
 
     call initial_setup   ; from labels/initialsetup.asm
 
     call startup_checks  ; from labels/startupchecks.asm
+
+    LF
+    PRINTN log_started_nasmserver, log_started_nasmserver_len
 
 .start_server:
 
