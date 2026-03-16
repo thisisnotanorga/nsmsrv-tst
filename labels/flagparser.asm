@@ -24,12 +24,14 @@ parse_flags:
     mov qword [flag_env_path], 0  ; default: not set
     mov byte [flag_help], 0
 
-    cmp r15, 1
+    cmp r15, 1                    ; argc = 1: no args passed
     je .done
 
     mov rcx, 1                    ; current argv index
 
 .next_arg:
+    ; Note to self: always re-set rsi after every check
+
     cmp rcx, r15
     jge .done
 
@@ -41,6 +43,8 @@ parse_flags:
 
     cmp rax, 1
     je .is_h
+
+    mov rsi, [rbp + 8 + 8 + rcx * 8]
 
     ; check -e
     lea rdi, [flag_str_e]
