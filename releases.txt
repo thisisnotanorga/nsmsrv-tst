@@ -14,6 +14,10 @@
 # - Release description: detailed information about the release
 # - =--- END ---=: marks the end of the release 
 
+=--- vblblblblbl ---=
+blblblblbl
+=--- END ---=
+
 =--- v1.2 ---=
 ### What changed
 - Default port changed from `80` to `8080`
