@@ -53,7 +53,7 @@ elif [ "$ARCH" = "aarch64" ]; then
     cat > "$BUNDLE_DIR/nasmserver" << 'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$DIR/qemu-x86_64-static" "$DIR/nasmserver-bin" "$@"
+exec "$DIR/qemu-x86_64-static" "$DIR/libs/ld-linux-x86-64.so.2" --library-path "$DIR/libs" "$DIR/nasmserver-bin" "$@"
 EOF
 
 else
