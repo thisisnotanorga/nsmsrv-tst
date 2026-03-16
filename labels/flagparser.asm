@@ -19,10 +19,10 @@ section .text
 ;   Expects: r15 = argc
 ;   Clobbers: rax, rbx, rcx, rsi, rdi
 parse_flags:
-    push rbp
     mov rbp, rsp
 
     mov qword [flag_env_path], 0  ; default: not set
+    mov byte [flag_help], 0
 
     cmp r15, 1
     je .done
@@ -129,5 +129,4 @@ parse_flags:
     ret
 
 .done:
-    pop rbp
     ret
