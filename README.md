@@ -12,19 +12,23 @@ I started learning NASM on a Monday afternoon, because I was bored in my NoSQL c
 
 ## Install (from a release)
 
-Each release ships a prebuilt `nasmserver` binary, a `www.zip` containing the default web directory structure and a `env.example` containing the default configuration.
+Each release ships prebuilt bundles for different architectures. The bundles contain everything you need to run NASMServer. This includes the entry script `nasmserver`, an example configuration file `env.example`, and a default web directory `www/`.
 
 ```bash
 # 1. Download and extract the release files
-unzip www.zip
+wget https://github.com/douxxtech/nasmserver/releases/latest/download/nasmserver-linux-x64.zip
+unzip nasmserver-linux-x64.zip -d nasmserver
 
-# 2. Make the binary executable
-chmod +x nasmserver
+# 2. Go in the extracted directory
+cd nasmserver
 
-# 3. Copy your .env (optional, see Configuration)
+# 3. Read the provided instructions.txt
+cat instructions.txt
+
+# 4. Copy your .env (optional, see Configuration)
 cp env.example .env
 
-# 4. Run it (defaults to port 8080, document root: ./www)
+# 5. Run it (defaults to port 8080, document root: ./www)
 ./nasmserver
 
 # Or pass a custom config file as -e
