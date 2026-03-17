@@ -14,7 +14,7 @@ mkdir -p "$BUNDLE_DIR/libs"
 # move the base things
 cp env.example "$BUNDLE_DIR/env.example"
 cp -r www "$BUNDLE_DIR/www"
-cp ".github/instructions/$ARCH.txt" "$BUNDLE_DIR/instructions.txt"
+cp ".github/bundle-files/$ARCH/*" "$BUNDLE_DIR/"
 
 if [ "$ARCH" = "x64" ]; then
     # move the bin to the bundle
