@@ -11,15 +11,19 @@ fi
 BUNDLE_DIR="bundle-$ARCH"
 mkdir -p "$BUNDLE_DIR/libs"
 
+# build the program
+chmod +x buildasm.sh
+./buildasm.sh program.asm
+
+# move the bin to the bundle
+cp program "$BUNDLE_DIR/nasmserver-bin"
+
 # move the base things
 cp env.example "$BUNDLE_DIR/env.example"
 cp -r www "$BUNDLE_DIR/www"
-cp ".github/bundle-files/$ARCH/*" "$BUNDLE_DIR/"
+cp .github/bundle-files/"$ARCH"/* "$BUNDLE_DIR/"
 
 if [ "$ARCH" = "x64" ]; then
-    # move the bin to the bundle
-    cp nasmserver "$BUNDLE_DIR/nasmserver-bin"
-
     # move the libs
     cp /lib/x86_64-linux-gnu/libc.so.6 "$BUNDLE_DIR/libs/"
     cp /lib64/ld-linux-x86-64.so.2 "$BUNDLE_DIR/libs/"
