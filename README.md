@@ -42,7 +42,7 @@ cp env.example .env
 
 
 ## Install (from a release)
-Each bundle comes with an install script, that installs NASMServer on your operating system. It can also be used to update the current installation:
+Each bundle comes with an install script, that installs NASMServer on your operating system. It can also be used to update the current installation without overriding configs.
 
 ```bash
 # once in the extracted bundle (see previous section)
