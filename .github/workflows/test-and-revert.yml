@@ -76,15 +76,18 @@ jobs:
       - name: Create issue
         if: steps.check_merge.outputs.is_merge == 'false' && steps.tests.outcome == 'failure'
         uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ steps.revert.outputs.branch }}
+          COMMIT_LIST: ${{ steps.revert.outputs.commit_list }}
         with:
           script: |
-            const branch = "${{ steps.revert.outputs.branch }}";
-            const commitList = `${{ steps.revert.outputs.commit_list }}`;
+            const branch = process.env.BRANCH;
+            const commitList = process.env.COMMIT_LIST;
 
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Tests failed. Reverted push ${context.sha.slice(0, 7)}`,
+              title: `Tests failed — reverted push ${context.sha.slice(0, 7)}`,
               body: [
                 "The following commits were pushed to `main` and caused test failures. They have been reverted and moved to `" + branch + "`.",
                 "",
@@ -92,5 +95,6 @@ jobs:
                 commitList,
                 "",
                 "Once fixed, open a pull request from `" + branch + "` back into `main`.",
-              ].join("\n")
+              ].join("\n"),
+              labels: ["bug"],
             });
