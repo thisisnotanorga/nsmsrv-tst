@@ -1,11 +1,11 @@
 ; program.asm - HTTP/1.0 server entry point
 
-%include "./macros/sysutils.asm"
+%include "./macros/envutils.asm"
 %include "./macros/fileutils.asm"
 %include "./macros/httputils.asm"
 %include "./macros/logutils.asm"
+%include "./macros/sysutils.asm"
 %include "./macros/whatmimeisthat.asm"
-%include "./macros/envutils.asm"
 
 %include "./labels/flagparser.asm"
 %include "./labels/initialsetup.asm"
