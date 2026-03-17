@@ -68,7 +68,7 @@ section .text
 ;   r14 = client socket fd (per request)
 ;   r13 = response buffer start (anchor) / client IP str (at .end, for logging)
 ;   r12 = response buffer write position / last status code (at .end, for logging)
-;   r11 = file fd (when serving a file)
+;   r11 = file fd (when serving a file) 
 
 _start:
     mov r15, [rsp]       ; argc
