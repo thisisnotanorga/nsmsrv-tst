@@ -79,7 +79,7 @@ jobs:
         with:
           script: |
             const branch = "${{ steps.revert.outputs.branch }}";
-            const commitList = `${{ steps.revert.outputs.commit_list }}`;
+            const commitList = process.env.COMMIT_LIST;
 
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -94,3 +94,5 @@ jobs:
                 "Once fixed, open a pull request from `" + branch + "` back into `main`.",
               ].join("\n")
             });
+          env:
+            COMMIT_LIST: ${{ steps.revert.outputs.commit_list }}
