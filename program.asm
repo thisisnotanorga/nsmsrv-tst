@@ -71,7 +71,6 @@ section .text
 ;   r11 = file fd (when serving a file) 
 
 _start:
-EXIT 1
     mov r15, [rsp]       ; argc
     call parse_flags     ; sets flag_* bytes, strips flags, etc. From labels/flagparser.asm
 
