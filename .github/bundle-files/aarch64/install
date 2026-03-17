@@ -10,6 +10,7 @@ mkdir -p "$INSTALL_DIR"
 
 cp -f ./nasmserver "$INSTALL_DIR/nasmserver"
 cp -f ./nasmserver-bin "$INSTALL_DIR/nasmserver-bin"
+cp -f ./qemu-x86_64-static "$INSTALL_DIR/qemu-x86_64-static"
 cp -rf ./libs/ "$INSTALL_DIR/libs"
 
 # config.cfg, don't override
