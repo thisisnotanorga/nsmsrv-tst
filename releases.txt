@@ -12,7 +12,11 @@
 # Details:
 # - release-name: the name of the release
 # - Release description: detailed information about the release
-# - =--- END ---=: marks the end of the release 
+# - =--- END ---=: marks the end of the release
+
+=--- v1.3.1 ---=
+gimme the bundles
+=--- END ---=
 
 =--- v1.3 ---=
 ### What changed
