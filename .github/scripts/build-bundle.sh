@@ -53,7 +53,9 @@ else
     exit 1
 fi
 
+# make scripts executable
 chmod +x "$BUNDLE_DIR/nasmserver"
+chmod +x "$BUNDLE_DIR/install"
 
 cd "$BUNDLE_DIR" && zip -r "../nasmserver-linux-$ARCH.zip" .
 echo "Bundle created: nasmserver-linux-$ARCH.zip"
