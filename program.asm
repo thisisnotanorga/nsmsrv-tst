@@ -72,6 +72,7 @@ section .text
 
 _start:
     EXIT 1
+    ;hello
     mov r15, [rsp]       ; argc
     call parse_flags     ; sets flag_* bytes, strips flags, etc. From labels/flagparser.asm
 
