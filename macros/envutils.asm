@@ -1,7 +1,7 @@
 ; envutils.asm - .env file parsing utilities for NASMServer
 
 section .bss
-    env_buf  resb 4096  ; Idk yet the number of bytes a file with comments could have
+    env_buf  resb 8192  ; files can get big, but 8192 should be enough
 
 ; GET_ENV_VALUE path, key, out_buf, out_buf_size
 ;   Reads a .env file and extracts the value for a given key.
@@ -21,7 +21,7 @@ section .bss
 
     mov rbx, rax                  ; rbx = fd
 
-    READ_FILE rbx, env_buf, 4096
+    READ_FILE rbx, env_buf, 8192
     cmp rax, 0
     jl %%close_fail
 
