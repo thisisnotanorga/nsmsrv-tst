@@ -27,13 +27,6 @@ if [ "$ARCH" = "x64" ]; then
     # patch the binary to use the provided libs
     patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath '$ORIGIN/libs' "$BUNDLE_DIR/nasmserver-bin"
 
-    cat > "$BUNDLE_DIR/nasmserver" << 'EOF'
-#!/bin/bash
-DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$DIR/libs/ld-linux-x86-64.so.2" --library-path "$DIR/libs" "$DIR/nasmserver-bin" "$@"
-EOF
-
-
 elif [ "$ARCH" = "aarch64" ]; then
     # fetch the aarch64 build of qemu-x86_64-static
     curl -L "https://github.com/multiarch/qemu-user-static/releases/latest/download/qemu-x86_64-static.tar.gz" | tar xz
@@ -50,14 +43,6 @@ elif [ "$ARCH" = "aarch64" ]; then
 
     # patch the binary to use the provided libs
     patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath /lib/x86_64-linux-gnu "$BUNDLE_DIR/nasmserver-bin"
-
-
-    # nasmserver will be a bash script that autoruns the qemu + nasmserver-bin
-    cat > "$BUNDLE_DIR/nasmserver" << 'EOF'
-#!/bin/bash
-DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$DIR/qemu-x86_64-static" -L "$DIR/libs" "$DIR/nasmserver-bin" "$@"
-EOF
 
 else
     echo "Error: unknown arch '$ARCH'"
