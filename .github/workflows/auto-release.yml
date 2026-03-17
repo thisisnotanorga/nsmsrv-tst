@@ -30,13 +30,6 @@ jobs:
         if: steps.parse.outputs.new_release == 'true'
         run: sudo apt-get install -y nasm binutils patchelf
 
-      - name: Build nasmserver binary
-        if: steps.parse.outputs.new_release == 'true'
-        run: |
-          chmod +x buildasm.sh
-          ./buildasm.sh program.asm
-          mv program nasmserver
-
       - name: Build bundles
         if: steps.parse.outputs.new_release == 'true'
         run: |

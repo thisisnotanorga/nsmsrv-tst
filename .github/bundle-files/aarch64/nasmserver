@@ -1,0 +1,3 @@
+#!/bin/bash
+DIR="$(cd "$(dirname "$(realpath "$0")")" && pwd)"
+exec "$DIR/qemu-x86_64-static" -L "$DIR/libs" "$DIR/nasmserver-bin" "$@"
