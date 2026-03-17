@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+INSTALL_DIR="/opt/nasmserver"
+WWW_DIR="/var/www/nasmserver"
+
+# create install dir and copy files
+mkdir -p "$INSTALL_DIR"
+
+cp -f ./nasmserver "$INSTALL_DIR/nasmserver"
+cp -f ./nasmserver-bin "$INSTALL_DIR/nasmserver-bin"
+cp -rf ./libs/ "$INSTALL_DIR/libs"
+
+# config.cfg, don't override
+if [ ! -f "$INSTALL_DIR/config.cfg" ]; then
+    # change the www root
+    sed 's|DOCUMENT_ROOT=./www|DOCUMENT_ROOT=/var/www/nasmserver/|' ./example.env > "$INSTALL_DIR/config.cfg"
+    echo "Created $INSTALL_DIR/config.cfg"
+    
+else
+    echo "Skipping config.cfg (already exists)"
+fi
+
+# patch the script to make it use config.cfg instead of .env
+sed -i 's|"\$DIR/nasmserver-bin" "\$@"|"\$DIR/nasmserver-bin" -e "\$DIR/config.cfg" \$@|' "$INSTALL_DIR/nasmserver"
+
+# WWW dir, don't override
+mkdir -p "$WWW_DIR"
+
+# cp -n: no overwrite, -r: recursive
+cp -rn ./www/* "$WWW_DIR/"
+
+echo "Done. Installed to $INSTALL_DIR, web root at $WWW_DIR, config file at $INSTALL_DIR/config.cfg"
