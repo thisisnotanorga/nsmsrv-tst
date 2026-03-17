@@ -46,11 +46,11 @@ section .bss
     client_ip_str     resb 16    ; "255.255.255.255\0"
 
     ; request / response
-    request           resb 1024
-    response          resb 1024
+    request           resb 8192  ; requests can get big
+    response          resb 512   ; 512 should be enough for headers
 
     ; path handling
-    path              resb 256
+    path              resb 768   ; docroot + url + index
     file_to_serve     resq 1     ; pointer to path to serve, or 0 for none
 
     ; misc
@@ -223,9 +223,9 @@ _start:
     call inet_ntop
 
 .handle_request:
-    READ_FILE r14, request, 1024
+    READ_FILE r14, request, 8192
 
-    IS_HTTP_REQUEST request, 1024
+    IS_HTTP_REQUEST request, 8192
 
     cmp rax, 1
     je .get
@@ -260,14 +260,11 @@ _start:
     sub rdi, rax                                  ; rdi = docroot length
     mov rbx, rdi                                  ; rbx = docroot length for offsetting
 
-    cmp rbx, 255
-    jge .forbidden                                ; if docroot alone is >= 255, there's no room for any path
-
-    mov r10, 255
+    mov r10, 767
     sub r10, rbx                                  ; rcx = 255 - docroot_len = remaining space
 
     lea rdi, [path + rbx]
-    PARSE_HTTP_PATH request, 1024, rdi, rax, r10  ; parse path into [path + docroot_len]
+    PARSE_HTTP_PATH request, 8192, rdi, rax, r10  ; parse path into [path + docroot_len]
 
     cmp rax, 0
     jle .forbidden
