@@ -14,6 +14,14 @@
 # - Release description: detailed information about the release
 # - =--- END ---=: marks the end of the release
 
+=--- v1.3 ---=
+### What changed
+- Requests and file paths now support longer inputs, so fewer unexpected 404s or truncated responses on complex URLs
+- All configurations string values are capped to 128 characters
+- Added an `install` script to both x64 and aarch64 bundles. Run `sudo ./install` to set up NASMServer system-wide (installs to `/opt/nasmserver`, web root at `/var/www/nasmserver`)
+- The install script can also be used to update an existing installation without overwriting your config
+=--- END ---=
+
 =--- v1.2-rev.1 ---=
 ### What changed
 **rev.1**
