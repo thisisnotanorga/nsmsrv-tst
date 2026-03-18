@@ -54,6 +54,10 @@ section .bss
     path              resb 768   ; docroot + url + index
     file_to_serve     resq 1     ; pointer to path to serve, or 0 for none
 
+    ; authentication
+    auth              resb 173   ; 128 chars in b64 -> 172, + 1 for null term
+    auth_decoded      resb 128
+
     ; misc
     last_status       resw 1     ; for logs
     content_length_b  resb 20

@@ -144,3 +144,97 @@
     mov %4, r9
 
 %endmacro
+
+; PARSE_AUTH_HEADER buffer, length, out_decoded, out_len, max_len
+;   Scans headers for "Authorization: Basic ", then decodes the base64
+;   token directly into out_decoded using B64_DECODE.
+;   Args:
+;     %1: buffer address
+;     %2: buffer length
+;     %3: output buffer for decoded credentials (e.g. "user:pass")
+;     %4: register to store decoded length (0 if not found)
+;     %5: output buffer max length (respected by B64_DECODE's own termination)
+;   Clobbers: rax, rbx, rcx, rdx, rsi, rdi, r8, r9
+%macro PARSE_AUTH_HEADER 5
+    xor %4, %4
+    mov rsi, %1
+
+    xor r8, r8      ; offset
+
+%%auth_scan:
+    ; need at least 22 bytes left: "Authorization: Basic " (21) + 1 byte of token
+    mov rax, r8
+    add rax, 22
+    cmp rax, %2
+    jg %%done
+
+    cmp byte [rsi + r8], 'A'
+    jne %%auth_next
+
+    ; "Authorization: Basic " split into dwords:
+    ;   [+0]  "Auth" = 0x68747541
+    ;   [+4]  "oriz" = 0x7a69726f
+    ;   [+8]  "atio" = 0x6f697461
+    ;   [+12] "n: B" = 0x42203a6e
+    ;   [+16] "asic" = 0x63697361
+    ;   [+20] " "   = 0x20
+    cmp dword [rsi + r8 +  0], 0x68747541
+    jne %%auth_next
+
+    cmp dword [rsi + r8 +  4], 0x7a69726f
+    jne %%auth_next
+
+    cmp dword [rsi + r8 +  8], 0x6f697461
+    jne %%auth_next
+
+    cmp dword [rsi + r8 + 12], 0x42203a6e
+    jne %%auth_next
+
+    cmp dword [rsi + r8 + 16], 0x63697361
+    jne %%auth_next
+
+    cmp byte  [rsi + r8 + 20], 0x20
+    jne %%auth_next
+
+    ; token starts at r8 + 21
+    add r8, 21
+
+    xor r9, r9
+
+%%auth_token_len:
+    mov rax, r8
+    add rax, r9
+    cmp rax, %2
+    jge %%auth_copy
+
+    movzx rax, byte [rsi + rax]
+    B64_CHAR_VAL al
+    cmp al, 0xff
+    je %%auth_copy
+
+    inc r9
+    cmp r9, %5 - 1
+    jge %%auth_copy
+    jmp %%auth_token_len
+
+%%auth_copy:
+    ; B64_DECODE needs a null-terminated source, so temporarily null-terminate
+    ; the token in the buffer and restore the original byte after
+    mov rax, r8
+    add rax, r9
+    
+    mov cl, [rsi + rax]          ; save the byte we're about to clobber
+    mov byte [rsi + rax], 0      ; temporary null terminator
+
+    B64_DECODE rsi + r8, %3, %4
+
+    mov [rsi + rax], cl          ; restore
+
+    jmp %%done
+
+%%auth_next:
+    inc r8
+    jmp %%auth_scan
+
+%%done:
+%endmacro
