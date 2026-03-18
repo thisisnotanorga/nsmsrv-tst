@@ -36,7 +36,7 @@
     jne %%invalid
 
     cmp dword [rsi + r8 - 4], 0x302e312f ; "/1.0"
-    je %%valid
+    je %%is_http
 
     cmp dword [rsi + r8 - 4], 0x312e312f ; "/1.1"
     jne %%invalid
