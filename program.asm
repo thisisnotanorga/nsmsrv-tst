@@ -259,12 +259,6 @@ _start:
     cmp rcx, 0
     je .unauthorized
 
-    PRINTN auth, rcx
-    STRLEN auth_username, rcx
-    PRINTN auth_username, rcx
-    STRLEN auth_password, rcx
-    PRINTN auth_password, rcx
-
     STRSPLIT auth, ':', username, password, rcx  ; using rcx since rax gets clobbered
 
     cmp rcx, 0                                   ; 0 = no ':', so bad creds format
