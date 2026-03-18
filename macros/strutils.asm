@@ -67,7 +67,7 @@
     push rsi
     push rdi
 
-    mov rsi, [%1]
+    lea rsi, [%1]
     lea rdi, [%2]
 
 %%loop:
@@ -90,6 +90,68 @@
 
 %%not_equal:
     xor %3, %3
+
+%%done:
+    pop rdi
+    pop rsi
+%endmacro
+
+; STRSPLIT src, split_char, out_a, out_b, found_reg
+;   Splits a null-terminated string at the first occurrence of split_char.
+;   Copies everything before split_char into out_a, everything after into out_b.
+;   If split_char is not found, out_a gets the full string and out_b is empty.
+;   Args:
+;     %1: pointer to source string (null-terminated)
+;     %2: byte value to split on (e.g. ':')
+;     %3: output buffer for the left part
+;     %4: output buffer for the right part
+;     %5: register to store result (1 if split_char was found, 0 otherwise)
+;   Clobbers: rax, rbx, rsi, rdi
+%macro STRSPLIT 5
+    push rsi
+    push rdi
+
+    lea rsi, [%1]  ; rsi = read pointer
+    lea rdi, [%3]  ; rdi = write pointer (left buffer)
+    xor %5, %5     ; assume not found
+
+%%copy_left:
+    mov al, [rsi]
+
+    test al, al
+    jz %%null_term_right  ; hit NUL without finding split_char
+
+    cmp al, %2
+    je %%found            ; found the split char
+
+    mov [rdi], al         ; copy byte into out_a
+    inc rsi
+    inc rdi
+
+    jmp %%copy_left
+
+%%found:
+    mov %5, 1
+    inc rsi            ; skip the split char
+
+    mov byte [rdi], 0  ; null-terminate out_a
+    lea rdi, [%4]      ; switch to right buffer
+
+%%copy_right:
+    mov al, [rsi]
+    mov [rdi], al     ; copy byte (including final NUL)
+
+    inc rsi
+    inc rdi
+    
+    test al, al
+    jnz %%copy_right  ; loop until NUL is copied
+    jmp %%done
+
+%%null_term_right:
+    mov byte [rdi], 0  ; null-terminate out_a
+    lea rdi, [%4]
+    mov byte [rdi], 0  ; out_b is empty
 
 %%done:
     pop rdi

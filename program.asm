@@ -34,12 +34,15 @@ section .data
     response_405             db "HTTP/1.0 405 Method Not Allowed", 0
     response_404             db "HTTP/1.0 404 Not Found", 0
     response_403             db "HTTP/1.0 403 Forbidden", 0
+    response_401             db "HTTP/1.0 401 Unauthorized", 0
     response_400             db "HTTP/1.0 400 Bad Request", 0
     response_200             db "HTTP/1.0 200 OK", 0
 
     server_header            db "Server: ", 0
     content_length_header    db "Content-Length: ", 0
     connection_close_header  db "Connection: close", 0
+    www_authenticate_header  db "WWW-Authenticate: Basic realm=", 0x22, "None", 0x22, 0  ;0x22 is "
+
 
 section .bss
     ; network
@@ -245,8 +248,36 @@ _start:
     jmp .forbidden                 ; in case i add a new code and forgot to implement it here
 
 .get:
-    PARSE_AUTH_HEADER request, 8192, auth, r10, 257
+    ; if no auth is configured, go to auth_ok (no auth setuped)
+    cmp byte [auth_username], 0
+    je .auth_ok
 
+    PARSE_AUTH_HEADER request, 8192, auth, 258
+    STRLEN auth, rcx
+
+    ; if nothing was decoded (no header sent), demand credentials
+    cmp rcx, 0
+    je .unauthorized
+
+    STRSPLIT auth, ':', username, password, rcx  ; using rcx since rax gets clobbered
+
+    cmp rcx, 0                                   ; 0 = no ':', so bad creds format
+    je .unauthorized
+
+    ; check if they're the correct ones
+
+    STREQ username, auth_username, rcx
+
+    cmp rcx, 0                                  ; 0 = not equal
+    je .unauthorized
+
+
+    STREQ password, auth_password, rcx
+
+    cmp rcx, 0
+    je .unauthorized
+
+    ; both passed = auth passed
 
 .auth_ok:
     ; prepend document_root so the path is relative to it
@@ -389,6 +420,19 @@ _start:
     mov word [last_status], 403
     jmp .send
 
+.unauthorized:
+    lea r13, [response]
+    lea r12, [response]
+    mov qword [file_to_serve], 0  ; no body for 401
+
+    mov rdi, 401
+    call .write_header
+
+    sub r12, r13
+
+    mov word [last_status], 401
+    jmp .send
+
 .bad_request:
     lea r13, [response]
     lea r12, [response]
@@ -415,6 +459,9 @@ _start:
     cmp rdi, 403
     je .write_403
 
+    cmp rdi, 401
+    je .write_401
+
     cmp rdi, 400
     je .write_400
 
@@ -432,6 +479,13 @@ _start:
 
 .write_403:
     AAPPEND r12, response_403
+    AAPPEND r12, crlf
+    jmp .header_server
+
+.write_401:
+    AAPPEND r12, response_401
+    AAPPEND r12, crlf
+    AAPPEND r12, www_authenticate_header
     AAPPEND r12, crlf
     jmp .header_server
 
@@ -453,6 +507,9 @@ _start:
     ; content type detection
     mov rdi, [file_to_serve]
 
+    test rdi, rdi              ; if file to serve is '0'
+    jz .header_content_length
+
     cmp byte [rdi], 0
     je .header_content_length
 
@@ -466,6 +523,9 @@ _start:
 .header_content_length:
     ; very similar to the previous one
     mov rdi, [file_to_serve]
+
+    test rdi, rdi
+    jz .header_conn_close
 
     cmp byte [rdi], 0
     je .header_conn_close
