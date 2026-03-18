@@ -152,7 +152,7 @@ _start:
     PRINTN log_port_buf, r9
 
 
-.wait:  
+.wait:
     ; from here, we're NOT stopping the program anymore
 
     ; block until a new connection arrives, then store the client fd in r14
