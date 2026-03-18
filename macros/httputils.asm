@@ -164,7 +164,7 @@
     mov rax, r8
     add rax, 22
     cmp rax, %2
-    jg %%done
+    jg %%not_found
 
     cmp byte [rsi + r8], 'A'
     jne %%auth_next
@@ -240,6 +240,8 @@
     inc r8
     jmp %%auth_scan
 
-%%done:
+%%not_found:
     mov byte [%3], 0  ; null-term on failure (already done on success by b64_dec)
+
+%%done:
 %endmacro
