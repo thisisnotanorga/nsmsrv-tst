@@ -55,8 +55,9 @@ section .bss
     file_to_serve     resq 1     ; pointer to path to serve, or 0 for none
 
     ; authentication
-    auth              resb 173   ; 128 chars in b64 -> 172, + 1 for null term
-    auth_decoded      resb 128
+    auth              resb 258   ; 128 (user) + 1 (:) + 128 (pwd) + null term (1)
+    username          resb 128
+    password          resb 128
 
     ; misc
     last_status       resw 1     ; for logs
@@ -68,7 +69,7 @@ section .text
     global _start
 
 
-; register usage, after startup (persistent across the request handling):
+; consistent register usage, after startup (persistent across the request handling):
 ;   r15 = server socket fd
 ;   r14 = client socket fd (per request)
 ;   r13 = response buffer start (anchor) / client IP str (at .end, for logging)
@@ -244,6 +245,10 @@ _start:
     jmp .forbidden                 ; in case i add a new code and forgot to implement it here
 
 .get:
+    PARSE_AUTH_HEADER request, 8192, auth, r10, 257
+
+
+.auth_ok:
     ; prepend document_root so the path is relative to it
     lea rsi, [document_root]
     lea rdi, [path]
