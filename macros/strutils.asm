@@ -176,3 +176,182 @@
 
 %%done:
 %endmacro
+
+; B64_DECODE src, dst, out_len_reg
+;   Decodes a null-terminated base64 string into a buffer.
+;   Args:
+;     %1: pointer to the base64 source string (null-terminated)
+;     %2: pointer to the destination buffer
+;     %3: register to store the number of decoded bytes
+;   Notes:
+;     Output is null-terminated.
+;     Invalid characters (including '=') are treated as end.
+;   Clobbers: rax, rbx, rcx, rdx, rsi, rdi
+%macro B64_DECODE 3
+    lea rsi, [%1] ; rsi = read pointer (src)
+    lea rdi, [%2] ; rdi = write pointer (dst)
+    xor %3, %3    ; output byte count = 0
+
+%%loop:
+    ; load 4 base64 chars, bail if we hit NUL or '=' early
+    movzx rax, byte [rsi]
+
+    test al, al
+    jz %%done
+
+    B64_CHAR_VAL al
+    cmp al, 0xff
+    je %%done
+
+    ; shl = shift left
+    shl rax, 18                ; char 0 -> bits [23:18]  
+
+    movzx rbx, byte [rsi + 1]  ;
+
+    test bl, bl
+    jz %%done
+
+    B64_CHAR_VAL bl
+    cmp bl, 0xff
+    je %%done
+    shl rbx, 12                ; char 1 -> bits [17:12]
+    or rax, rbx
+
+    movzx rbx, byte [rsi + 2]
+
+    test bl, bl
+    jz %%flush2                ; 2 chars = 1 output byte
+
+    cmp bl, '='
+    je %%flush2
+
+    B64_CHAR_VAL bl
+
+    cmp bl, 0xff
+    je %%flush2
+
+    shl rbx, 6                 ; char 2 -> bits [11:6]
+    or rax, rbx
+
+    movzx rbx, byte [rsi + 3]
+
+    test bl, bl
+    jz %%flush3                ; 3 chars = 2 output bytes
+
+    cmp bl, '='
+    je %%flush3
+
+    B64_CHAR_VAL bl
+
+    cmp bl, 0xff
+    je %%flush3
+
+    or rax, rbx                ; char 3 -> bits [5:0]
+
+    ; write all 3 decoded bytes
+    mov rcx, rax
+    shr rcx, 16
+    mov [rdi], cl
+    inc rdi
+
+    mov rcx, rax
+    shr rcx, 8
+    and cl, 0xff
+    mov [rdi], cl
+    inc rdi
+
+    mov rcx, rax
+    and cl, 0xff
+    mov [rdi], cl
+    inc rdi
+
+    add %3, 3
+    add rsi, 4
+    jmp %%loop
+
+%%flush2:
+    ; only 2 base64 chars = 1 byte
+    shr rax, 16
+    mov [rdi], al
+    inc rdi
+    inc %3
+    jmp %%done
+
+%%flush3:
+    ; only 3 base64 chars = 2 bytes
+    mov rcx, rax
+    shr rcx, 16
+    mov [rdi], cl
+    inc rdi
+
+    mov rcx, rax
+    shr rcx, 8
+    and cl, 0xff
+    mov [rdi], cl
+    inc rdi
+
+    add %3, 2
+
+%%done:
+    mov byte [rdi], 0  ; null-terminate
+%endmacro
+
+; B64_CHAR_VAL reg
+;   Converts a single base64 ASCII character to its 6-bit value in-place.
+;   Returns 0xff in reg if the character is invalid.
+;   Args:
+;     %1: byte register (al, bl, etc.)
+;   The register is modified in place
+;   Clobbers: nothing else
+%macro B64_CHAR_VAL 1
+    ; https://base64.guru/learn/base64-algorithm/decode
+    ; https://base64.guru/learn/base64-characters
+
+    cmp %1, 'A'
+    jl %%try_lower
+
+    cmp %1, 'Z'
+    jg %%try_lower
+
+    sub %1, 'A'     ; A-Z -> 0-25
+    jmp %%done
+
+%%try_lower:
+    cmp %1, 'a'
+    jl %%try_digit
+
+    cmp %1, 'z'
+    jg %%try_digit
+
+    sub %1, 'a' - 26  ; a-z -> 26-51
+    jmp %%done
+
+%%try_digit:
+    cmp %1, '0'
+    jl %%try_plus
+
+    cmp %1, '9'
+    jg %%try_plus
+
+    sub %1, '0' - 52  ; 0-9 -> 52-61
+    jmp %%done
+
+%%try_plus:
+    cmp %1, '+'
+    je %%is_plus
+
+    cmp %1, '/'
+    je %%is_slash
+
+    mov %1, 0xff   ; invalid
+    jmp %%done
+
+%%is_plus:
+    mov %1, 62
+    jmp %%done
+
+%%is_slash:
+    mov %1, 63
+
+%%done:
+%endmacro
