@@ -145,18 +145,16 @@
 
 %endmacro
 
-; PARSE_AUTH_HEADER buffer, length, out_decoded, out_len, max_len
+; PARSE_AUTH_HEADER buffer, length, out_decoded, max_len
 ;   Scans headers for "Authorization: Basic ", then decodes the base64
 ;   token directly into out_decoded using B64_DECODE.
 ;   Args:
 ;     %1: buffer address
 ;     %2: buffer length
 ;     %3: output buffer for decoded credentials (e.g. "user:pass")
-;     %4: register to store decoded length (0 if not found)
-;     %5: output buffer max length (respected by B64_DECODE's own termination)
+;     %4: output buffer max length
 ;   Clobbers: rax, rbx, rcx, rdx, rsi, rdi, r8, r9
-%macro PARSE_AUTH_HEADER 5
-    xor %4, %4
+%macro PARSE_AUTH_HEADER 4
     mov rsi, %1
 
     xor r8, r8      ; offset
@@ -213,7 +211,7 @@
     je %%auth_copy
 
     inc r9
-    cmp r9, %5 - 1
+    cmp r9, ((%4 - 1) / 3) * 4     ; cap input so decoded output fits in %4 - 1 bytes
     jge %%auth_copy
     jmp %%auth_token_len
 
@@ -230,7 +228,7 @@
     push rsi                 ; save base pointer (B64_DECODE clobbers rsi)
     push rax                 ; save restore index too (B64_DECODE clobbers rax)
 
-    B64_DECODE rdi, %3, %4
+    B64_DECODE rdi, %3, r9
 
     pop rax
     pop rsi
@@ -243,4 +241,5 @@
     jmp %%auth_scan
 
 %%done:
+    mov byte [%3], 0  ; null-term on failure (already done on success by b64_dec)
 %endmacro
