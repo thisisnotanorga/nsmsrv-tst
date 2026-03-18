@@ -59,8 +59,8 @@ section .bss
 
     ; authentication
     auth              resb 258   ; 128 (user) + 1 (:) + 128 (pwd) + null term (1)
-    username          resb 128
-    password          resb 128
+    username          resb 129
+    password          resb 129
 
     ; misc
     last_status       resw 1     ; for logs
@@ -252,12 +252,18 @@ _start:
     cmp byte [auth_username], 0
     je .auth_ok
 
-    PARSE_AUTH_HEADER request, 8192, auth, 258
+    PARSE_AUTH_HEADER request, 8192, auth, 264
     STRLEN auth, rcx
 
     ; if nothing was decoded (no header sent), demand credentials
     cmp rcx, 0
     je .unauthorized
+
+    PRINTN auth, rcx
+    STRLEN auth_username, rcx
+    PRINTN auth_username, rcx
+    STRLEN auth_password, rcx
+    PRINTN auth_password, rcx
 
     STRSPLIT auth, ':', username, password, rcx  ; using rcx since rax gets clobbered
 

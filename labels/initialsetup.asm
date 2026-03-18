@@ -38,23 +38,23 @@ section .data
 
 section .bss
     ; config (loaded from .env at startup)
-    ; all custom paths are 128 chars max for consistency
+    ; all custom paths are 128 chars max for consistency (129 for the null byte)
 
-    env_path_buf       resb 128
+    env_path_buf       resb 129
     port_str_buf       resb 8    ; ascii port from .env before ATOI
     port               resw 1    ; port number (host byte order)
     interface          resd 1    ; 0 = 0.0.0.0
     max_conns          resb 1    ; max simultaneous connections (max 255)
-    document_root      resb 128  ; document root, no trailing slash !
-    index_file         resb 128  ; default index file
+    document_root      resb 129  ; document root, no trailing slash !
+    index_file         resb 129  ; default index file
     server_w_ver       resb 24   ; The default server with the version (24 chars should be enough)
-    server_name        resb 128  ; Server: header value
-    auth_username      resb 128  ; for HTTP 1.0 authentication
-    auth_password      resb 128
-    errordoc_405       resb 128  ; relative to document_root, start with /
-    errordoc_404       resb 128
-    errordoc_403       resb 128
-    errordoc_400       resb 128
+    server_name        resb 129  ; Server: header value
+    auth_username      resb 129  ; for HTTP 1.0 authentication
+    auth_password      resb 129
+    errordoc_405       resb 129  ; relative to document_root, start with /
+    errordoc_404       resb 129
+    errordoc_403       resb 129
+    errordoc_400       resb 129
 
     ; error doc paths (built at startup from document_root + errordoc_*)
     errordoc_400_path  resb 256
@@ -119,16 +119,16 @@ initial_setup:
 .load_env:
     ; load all config from .env (or fall back to defaults)
 
-    ENV_DEFAULT env_path_buf, key_docroot,      document_root,  128,  default_docroot
-    ENV_DEFAULT env_path_buf, key_index,        index_file,     128,  default_index
-    ENV_DEFAULT env_path_buf, key_name,         server_name,    128,  server_w_ver
-    ENV_DEFAULT env_path_buf, key_authuser,     auth_username,  128,  default_authuser
-    ENV_DEFAULT env_path_buf, key_authpass,     auth_password,  128,  default_authpass
+    ENV_DEFAULT env_path_buf, key_docroot,      document_root,  129,  default_docroot
+    ENV_DEFAULT env_path_buf, key_index,        index_file,     129,  default_index
+    ENV_DEFAULT env_path_buf, key_name,         server_name,    129,  server_w_ver
+    ENV_DEFAULT env_path_buf, key_authuser,     auth_username,  129,  default_authuser
+    ENV_DEFAULT env_path_buf, key_authpass,     auth_password,  129,  default_authpass
 
-    ENV_DEFAULT env_path_buf, key_errordoc_405, errordoc_405,   128,  default_errordoc_405
-    ENV_DEFAULT env_path_buf, key_errordoc_404, errordoc_404,   128,  default_errordoc_404
-    ENV_DEFAULT env_path_buf, key_errordoc_403, errordoc_403,   128,  default_errordoc_403
-    ENV_DEFAULT env_path_buf, key_errordoc_400, errordoc_400,   128,  default_errordoc_400
+    ENV_DEFAULT env_path_buf, key_errordoc_405, errordoc_405,   129,  default_errordoc_405
+    ENV_DEFAULT env_path_buf, key_errordoc_404, errordoc_404,   129,  default_errordoc_404
+    ENV_DEFAULT env_path_buf, key_errordoc_403, errordoc_403,   129,  default_errordoc_403
+    ENV_DEFAULT env_path_buf, key_errordoc_400, errordoc_400,   129,  default_errordoc_400
 
     ; port: read as ascii, then convert to integer
     ENV_DEFAULT env_path_buf, key_port, port_str_buf, 8, default_port

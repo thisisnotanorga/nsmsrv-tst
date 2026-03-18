@@ -211,7 +211,7 @@
     je %%auth_copy
 
     inc r9
-    cmp r9, ((%4 - 1) / 3) * 4     ; cap input so decoded output fits in %4 - 1 bytes
+    cmp r9, ((%4 - 1 + 2) / 3) * 4  ; cap input so decoded output fits in %4 - 1 bytes
     jge %%auth_copy
     jmp %%auth_token_len
 
