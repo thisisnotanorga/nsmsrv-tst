@@ -38,11 +38,10 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
             echo "<details>"
             echo "<summary>Benchmark results</summary>"
             echo ""
+            echo "### Level $i"
             echo '```'
             for i in 1 2 3; do
-                echo "<h3>Level $i</h3>"
                 cat "bm${i}.txt"
-                echo ""
             done
             echo '```'
             echo ""
