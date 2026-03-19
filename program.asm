@@ -40,6 +40,7 @@ section .data
 
     server_header            db "Server: ", 0
     content_length_header    db "Content-Length: ", 0
+    expires_header           db "Expires: ", 0
     connection_close_header  db "Connection: close", 0
     www_authenticate_header  db "WWW-Authenticate: Basic realm=", 0x22, "None", 0x22, 0  ;0x22 is "
 
@@ -67,6 +68,7 @@ section .bss
     content_length_b  resb 20
     process_count     resb 1     ; current processes count
     log_port_buf      resb 8     ; "65535\n\0" worst case
+    expires_time      resb 32    ; "Mon, 01 Jan 2000 00:00:00 GMT\0" + padding
 
 section .text
     global _start
@@ -522,17 +524,25 @@ _start:
     mov rdi, [file_to_serve]
 
     cmp byte [rdi], 0
-    je .header_conn_close
+    je .header_expires
 
     FILE_SIZE rdi, rbx
 
     cmp rbx, 0                          ; rbx < 0 means that it failed, skipping header
-    jl .header_conn_close
+    jl .header_expires
 
     ITOA rbx, content_length_b, rcx
 
     AAPPEND r12, content_length_header
     AAPPEND r12, content_length_b
+    AAPPEND r12, crlf
+
+.header_expires:
+    mov r8d, dword [max_age]
+    HTTP_EXPIRE_DATE r8, expires_time
+
+    AAPPEND r12, expires_header
+    AAPPEND r12, expires_time
     AAPPEND r12, crlf
 
 .header_conn_close:

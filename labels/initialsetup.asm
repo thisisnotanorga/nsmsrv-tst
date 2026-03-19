@@ -23,6 +23,9 @@ section .data
     key_authpass          db "AUTH_PASSWORD", 0
     default_authpass      db "", 0
 
+    key_maxage            db "MAX_AGE", 0
+    default_maxage        db "600", 0
+
     ; errordocs files, relatively to the document_root (empty = none)
     ; start them with a slash !
 
@@ -46,6 +49,8 @@ section .bss
     port_str_buf       resb 8    ; ascii port from .env before ATOI
     port               resw 1    ; port number (host byte order)
     interface          resd 1    ; 0 = 0.0.0.0
+    max_age_str        resb 12   ; enough for "4294967295\0" (max value of resd 1)
+    max_age            resd 1
     max_conns          resb 1    ; max simultaneous connections (max 255)
     document_root      resb 129  ; document root, no trailing slash !
     index_file         resb 129  ; default index file
@@ -140,10 +145,13 @@ initial_setup:
     ATOI port_str_buf, rax
     mov word [port], ax
 
-    ; max_conns: same deal, byte is enough (max 255)
     ENV_DEFAULT env_path_buf, key_maxconns, port_str_buf, 8, default_maxconns  ; reuse port_str_buf, we're done with it
     ATOI port_str_buf, rax
     mov byte [max_conns], al
+
+    ENV_DEFAULT env_path_buf, key_maxage, max_age_str, 12, default_maxage
+    ATOI max_age_str, rax
+    mov dword [max_age], eax
 
     ; build sockaddr from the now-loaded port/interface
     movzx eax, word [port]
