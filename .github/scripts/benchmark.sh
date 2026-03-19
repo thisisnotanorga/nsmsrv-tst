@@ -5,6 +5,7 @@ BINARY="./program"
 CFG="benchmark.cfg"
 PID=""
 CORES=$(nproc)
+MAX_LEVELS="${1:-3}"
 
 cleanup() {
     [ -n "$PID" ] && kill "$PID" 2>/dev/null || true
@@ -80,9 +81,9 @@ run_bench() {
     } > "$outfile"
 }
 
-run_bench 1 50 20 bm1.txt
-run_bench 2 200 30 bm2.txt
-run_bench 3 500 45 bm3.txt
+[ "$MAX_LEVELS" -ge 1 ] && run_bench 1 50 20 bm1.txt
+[ "$MAX_LEVELS" -ge 2 ] && run_bench 2 200 30 bm2.txt
+[ "$MAX_LEVELS" -ge 3 ] && run_bench 3 500 45 bm3.txt
 
 # stop server
 kill "$WATCH_PID" 2>/dev/null || true
@@ -95,7 +96,7 @@ echo ""
 echo "================================"
 echo "  Benchmark results"
 echo "================================"
-for i in 1 2 3; do
+for i in $(seq 1 "$MAX_LEVELS"); do
     echo ""
     echo "-- Level $i --"
     cat "bm${i}.txt"
