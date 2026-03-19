@@ -38,12 +38,13 @@ section .data
     response_400             db "HTTP/1.0 400 Bad Request", 0
     response_200             db "HTTP/1.0 200 OK", 0
 
+    www_authenticate_header  db "WWW-Authenticate: Basic realm=", 0x22, "None", 0x22, 0  ;0x22 is "
     date_header              db "Date: ", 0
     server_header            db "Server: ", 0
+    connection_close_header  db "Connection: close", 0
+    content_type_header      db "Content-Type: ", 0
     content_length_header    db "Content-Length: ", 0
     expires_header           db "Expires: ", 0
-    connection_close_header  db "Connection: close", 0
-    www_authenticate_header  db "WWW-Authenticate: Basic realm=", 0x22, "None", 0x22, 0  ;0x22 is "
 
 
 section .bss
@@ -473,29 +474,29 @@ _start:
 .write_405:
     AAPPEND r12, response_405
     AAPPEND r12, crlf
-    jmp .header_server
+    jmp .header_date
 
 .write_404:
     AAPPEND r12, response_404
     AAPPEND r12, crlf
-    jmp .header_server
+    jmp .header_date
 
 .write_403:
     AAPPEND r12, response_403
     AAPPEND r12, crlf
-    jmp .header_server
+    jmp .header_date
 
 .write_401:
     AAPPEND r12, response_401
     AAPPEND r12, crlf
     AAPPEND r12, www_authenticate_header
     AAPPEND r12, crlf
-    jmp .header_server
+    jmp .header_date
 
 .write_400:
     AAPPEND r12, response_400
     AAPPEND r12, crlf
-    jmp .header_server
+    jmp .header_date
 
 .write_200:
     AAPPEND r12, response_200
@@ -513,6 +514,10 @@ _start:
     AAPPEND r12, server_name
     AAPPEND r12, crlf
 
+.header_conn_close:
+    AAPPEND r12, connection_close_header
+    AAPPEND r12, crlf
+
 .header_content_type:
     ; content type detection
     mov rdi, [file_to_serve]
@@ -520,11 +525,13 @@ _start:
     cmp byte [rdi], 0
     je .header_content_length
 
+    AAPPEND r12, content_type_header
+
     GET_MIME_TYPE rdi, rbx     ; content type will be in rsi
 
     mov rdi, rbx               ; aappend doesn't clobbers rdi
+    
     AAPPEND r12, rdi
-
     AAPPEND r12, crlf
 
 .header_content_length:
@@ -553,9 +560,7 @@ _start:
     AAPPEND r12, header_time
     AAPPEND r12, crlf
 
-.header_conn_close:
-    AAPPEND r12, connection_close_header
-    AAPPEND r12, crlf
+.header_end:
     AAPPEND r12, crlf                     ; blank line = end of headers
     ret
 
