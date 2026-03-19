@@ -1,5 +1,13 @@
 ; httputils.asm - HTTP/1.0 parsing utilities
 
+extern gmtime_r
+extern strftime
+
+section .data
+    http_date_fmt       db "%a, %d %b %Y %H:%M:%S GMT", 0  ; RFC 7231 date format
+    http_date_timespec  dq 0, 0                            ; tv_sec, tv_nsec (reused for expire calc)
+    http_date_tm_buf    times 64 db 0                      ; struct tm
+
 ; IS_HTTP_REQUEST buffer, length
 ;   Checks for "GET " prefix and "HTTP/1.x" just before the first CRLF.
 ;   Intentional note: We're treating 'HTTP/1.1' as a valid one, even if we return HTTP/1.0.
@@ -244,4 +252,38 @@
     mov byte [%3], 0  ; null-term on failure (already done on success by b64_dec)
 
 %%done:
+%endmacro
+
+; HTTP_EXPIRE_DATE offset_sec, out_buf
+;   Builds a null-terminated RFC 7231 GMT date string for use in Expires: headers.
+;   Takes the current wall-clock time, adds offset_sec seconds, then formats it.
+;   Args:
+;     %1: offset in seconds to add (immediate or register)
+;     %2: output buffer, min 32b
+;   Returns:
+;     %2 contains a null-terminated string like "Mon, 01 Jan 2000 00:00:00 GMT"
+;   Clobbers: rax, rdi, rsi, rdx, rcx
+%macro HTTP_EXPIRE_DATE 2
+    ; clock_gettime(CLOCK_REALTIME, &http_date_timespec)
+    mov rax, 228
+    xor rdi, rdi
+    mov rsi, http_date_timespec
+    syscall
+
+    ; add offset to tv_sec
+    mov rax, [http_date_timespec]
+    add rax, %1
+    mov [http_date_timespec], rax
+
+    ; gmtime_r(&tv_sec, &http_date_tm_buf)
+    mov rdi, http_date_timespec
+    mov rsi, http_date_tm_buf
+    call gmtime_r
+
+    ; strftime(out, 32, fmt, &tm)
+    mov rdi, %2
+    mov rsi, 32
+    mov rdx, http_date_fmt
+    mov rcx, http_date_tm_buf
+    call strftime
 %endmacro
