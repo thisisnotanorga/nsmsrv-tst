@@ -38,6 +38,7 @@ section .data
     response_400             db "HTTP/1.0 400 Bad Request", 0
     response_200             db "HTTP/1.0 200 OK", 0
 
+    date_header              db "Date: ", 0
     server_header            db "Server: ", 0
     content_length_header    db "Content-Length: ", 0
     expires_header           db "Expires: ", 0
@@ -68,7 +69,7 @@ section .bss
     content_length_b  resb 20
     process_count     resb 1     ; current processes count
     log_port_buf      resb 8     ; "65535\n\0" worst case
-    expires_time      resb 32    ; "Mon, 01 Jan 2000 00:00:00 GMT\0" + padding
+    header_time       resb 32    ; "Mon, 01 Jan 2000 00:00:00 GMT\0" + padding
 
 section .text
     global _start
@@ -500,6 +501,13 @@ _start:
     AAPPEND r12, response_200
     AAPPEND r12, crlf
 
+.header_date:
+    GET_HTTP_TIME header_time
+
+    AAPPEND r12, date_header
+    AAPPEND r12, header_time
+    AAPPEND r12, crlf
+
 .header_server:
     AAPPEND r12, server_header
     AAPPEND r12, server_name
@@ -539,10 +547,10 @@ _start:
 
 .header_expires:
     mov r8d, dword [max_age]
-    HTTP_EXPIRE_DATE r8, expires_time
+    HTTP_EXPIRE_DATE r8, header_time
 
     AAPPEND r12, expires_header
-    AAPPEND r12, expires_time
+    AAPPEND r12, header_time
     AAPPEND r12, crlf
 
 .header_conn_close:
