@@ -28,7 +28,7 @@ jobs:
 
       - name: Format benchmark comment
         run: |
-          WRK=$(cat bm1.txt | awk '/\[wrk\]/{found=1; next} found{print}')
+          WRK=$(awk '/^\[server\]/{skip=1} /^\[wrk\]/{skip=0} !skip' bm1.txt)
           echo '```' > comment.md
           echo "$WRK" >> comment.md
           echo '```' >> comment.md
