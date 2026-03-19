@@ -27,7 +27,14 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
     echo ""
     echo "### Updating to this version"
     echo ""
-    echo "To update to this version, update your existing binaries and configuration files."
+    echo "To update to this version, update your existing binaries and configuration files.  "
+    echo "If you have a system install of NASMServer, use the following command to update your install (it won't overwrite your configurations):"
+    echo "\`\`\`"
+    echo "# x64"
+    echo "wget https://github.com/douxxtech/nasmserver/releases/download/$VERSION/nasmserver-linux-x64.zip && unzip nasmserver-linux-x64.zip -d nasmserver-$VERSION && (cd nasmserver-$VERSION && sudo ./install) && rm -rf nasmserver-linux-x64.zip nasmserver-$VERSION"
+    echo "# aarch64"
+    echo "wget https://github.com/douxxtech/nasmserver/releases/download/$VERSION/nasmserver-linux-aarch64.zip && unzip nasmserver-linux-aarch64.zip -d nasmserver-$VERSION && (cd nasmserver-$VERSION && sudo ./install) && rm -rf nasmserver-linux-aarch64.zip nasmserver-$VERSION"
+    echo "\`\`\`"
     echo ""
 
     if [ -n "$PREVIOUS_COMMIT" ]; then
@@ -38,12 +45,12 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
             echo "<details>"
             echo "<summary>Benchmark results</summary>"
             echo ""
-            echo "### Level $i"
-            echo '```'
             for i in 1 2 3; do
+                echo "### Level $i"
+                echo '```'
                 cat "bm${i}.txt"
+                echo '```'
             done
-            echo '```'
             echo ""
             echo "</details>"
             echo ""
