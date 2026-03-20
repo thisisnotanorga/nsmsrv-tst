@@ -14,6 +14,14 @@
 # - Release description: detailed information about the release
 # - =--- END ---=: marks the end of the release 
 
+=--- v1.6 ---=
+### What changed
+- Added `HEAD` request support: clients can now request headers only without downloading the file body
+- Responses now include a `Last-Modified:` header with the file's last change time
+- Responses now include `Accept-Ranges: none`, explicitly warning that partial/range downloads are not supported
+- `405 Method Not Allowed` responses now include an `Allow:` header listing supported methods, as required by the HTTP spec
+=--- END ---=
+
 =--- v1.5 ---=
 ### What changed
 - Added `MAX_AGE` config option to control how long browsers cache files (default: 600 seconds)
