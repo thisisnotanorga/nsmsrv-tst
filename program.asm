@@ -42,10 +42,11 @@ section .data
     www_authenticate_header  db "WWW-Authenticate: Basic realm=", 0x22, "None", 0x22, 0  ;0x22 is "
     date_header              db "Date: ", 0
     server_header            db "Server: ", 0
-    connection_close_header  db "Connection: close", 0
+    last_modified_header     db "Last-Modified: ", 0
+    expires_header           db "Expires: ", 0
     content_type_header      db "Content-Type: ", 0
     content_length_header    db "Content-Length: ", 0
-    expires_header           db "Expires: ", 0
+    connection_close_header  db "Connection: close", 0
 
 
 section .bss
@@ -517,8 +518,25 @@ _start:
     AAPPEND r12, server_name
     AAPPEND r12, crlf
 
-.header_conn_close:
-    AAPPEND r12, connection_close_header
+.header_last_modified:
+    mov rdi, [file_to_serve]
+
+    cmp byte [rdi], 0
+    je .header_expires
+
+    AAPPEND r12, last_modified_header
+
+    FILE_LAST_MODIFIED rdi, header_time
+
+    AAPPEND r12, header_time
+    AAPPEND r12, crlf
+
+.header_expires:
+    mov r8d, dword [max_age]
+    HTTP_EXPIRE_DATE r8, header_time
+
+    AAPPEND r12, expires_header
+    AAPPEND r12, header_time
     AAPPEND r12, crlf
 
 .header_content_type:
@@ -542,12 +560,12 @@ _start:
     mov rdi, [file_to_serve]
 
     cmp byte [rdi], 0
-    je .header_expires
+    je .header_conn_close
 
     FILE_SIZE rdi, rbx
 
     cmp rbx, 0                          ; rbx < 0 means that it failed, skipping header
-    jl .header_expires
+    jl .header_conn_close
 
     ITOA rbx, content_length_b, rcx
 
@@ -555,12 +573,8 @@ _start:
     AAPPEND r12, content_length_b
     AAPPEND r12, crlf
 
-.header_expires:
-    mov r8d, dword [max_age]
-    HTTP_EXPIRE_DATE r8, header_time
-
-    AAPPEND r12, expires_header
-    AAPPEND r12, header_time
+.header_conn_close:
+    AAPPEND r12, connection_close_header
     AAPPEND r12, crlf
 
 .header_end:
