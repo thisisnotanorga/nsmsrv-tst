@@ -23,6 +23,9 @@ section .data
     key_authpass          db "AUTH_PASSWORD", 0
     default_authpass      db "", 0
 
+    key_servedot          db "SERVE_DOTFILES", 0
+    default_servedot      db "false", 0
+
     key_maxage            db "MAX_AGE", 0
     default_maxage        db "600", 0
 
@@ -58,6 +61,8 @@ section .bss
     server_name        resb 129  ; Server: header value
     auth_username      resb 129  ; for HTTP 1.0 authentication
     auth_password      resb 129
+    serve_dot_str      resb 5    ; "true\0"
+    serve_dotfiles     resb 1
     errordoc_405       resb 129  ; relative to document_root, start with /
     errordoc_404       resb 129
     errordoc_403       resb 129
@@ -153,9 +158,13 @@ initial_setup:
     ATOI max_age_str, rax
     mov dword [max_age], eax
 
+    ENV_DEFAULT env_path_buf, key_servedot, serve_dot_str, 5, default_servedot
+    call .is_servedot_true
+    
+
     ; build sockaddr from the now-loaded port/interface
     movzx eax, word [port]
-    xchg al, ah                    ; htons(), swap bytes for big-endian
+    xchg al, ah                     ; htons(), swap bytes for big-endian
     mov word [sockaddr + 2], ax
 
     mov eax, [interface]
@@ -174,6 +183,16 @@ initial_setup:
     lea r14, [server_w_ver]
     AAPPEND r14, default_name
     AAPPEND r14, version
+    ret
+
+.is_servedot_true:
+    cmp dword [serve_dot_str], 0x65757274  ; "true"
+    je .set_servedot_true
+
+    ret
+
+.set_servedot_true:
+    mov byte [serve_dotfiles], 1
     ret
 
 .failed_read_file:
