@@ -356,7 +356,7 @@ _start:
 
 .check_dotfile:
     ; check if someone is trying to get a dotfile
-    cmp byte [serve_dotfiles], 1  ; if the user want to serve dotfiles, just skip
+    cmp byte [serve_dots], 1  ; if the user want to serve dotfiles, just skip
     je .check_exists
 
     PATH_HAS_DOT path, rcx
