@@ -9,7 +9,7 @@ fail() { echo "[FAIL] $1"; echo ""; FAIL=$((FAIL + 1)); }
 
 cleanup() {
     [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null
-    rm -f .env
+    rm -f test-env.cfg
     rm -rf pppIMD
     rm -f program
 }
@@ -26,7 +26,7 @@ else
 fi
 
 # setup files
-cat > .env <<EOF
+cat > test-env.cfg <<EOF
 DOCUMENT_ROOT=./pppIMD
 INDEX_FILE=hello.txt
 PORT=80
@@ -37,7 +37,7 @@ echo "Hii :3" > pppIMD/hello.txt
 
 # test 2
 echo ">> Running on port 80 (should fail)..."
-./program -e .env > /dev/null 2>&1
+./program -e test-env.cfg > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     pass "Correctly exited with error on port 80"
@@ -46,11 +46,11 @@ else
 fi
 
 # switch to port 8080
-sed -i 's/PORT=80/PORT=8080/' .env
+sed -i 's/PORT=80/PORT=8080/' test-env.cfg
 
 # test 3
 echo ">> Running on port 8080..."
-./program -e .env > /dev/null 2>&1 &
+./program -e test-env.cfg > /dev/null 2>&1 &
 SERVER_PID=$!
 sleep 1
 
