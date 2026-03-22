@@ -37,17 +37,23 @@ jobs:
           .github/scripts/build-bundle.sh x64
           .github/scripts/build-bundle.sh aarch64
 
-      - name: Run benchmarks
+      - name: Check binary size
         if: steps.parse.outputs.new_release == 'true'
         run: |
-          chmod +x .github/scripts/benchmark.sh
-          .github/scripts/benchmark.sh
+          chmod +x .github/scripts/binary-size.sh
+          .github/scripts/binary-size.sh > bin-size.txt
 
       - name: Run syscalls tests
         if: steps.parse.outputs.new_release == 'true'
         run: |
           chmod +x .github/scripts/syscalls.sh
           .github/scripts/syscalls.sh > syscalls-results.txt
+
+      - name: Run benchmarks
+        if: steps.parse.outputs.new_release == 'true'
+        run: |
+          chmod +x .github/scripts/benchmark.sh
+          .github/scripts/benchmark.sh
 
       - name: Generate release notes
         if: steps.parse.outputs.new_release == 'true'

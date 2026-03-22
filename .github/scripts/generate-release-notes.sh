@@ -42,11 +42,23 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
     echo "<summary>How it performs</summary>"
     echo ""
 
+    # bin size
+    if [ -f bin-size.txt ]; then
+        echo ""
+        echo "**Binary size**"
+        echo '```'
+        cat bin-size.txt | tail -1
+        echo '```'
+        echo ""
+    fi
+
     # syscalls results
     if [ -f syscalls-results.txt ]; then
         echo ""
         echo "**Syscalls stats**"
-        cat syscalls-results.txt | head -3
+        echo '```'
+        cat syscalls-results.txt | tail -3
+        echo '```'
         echo ""
     fi
 
