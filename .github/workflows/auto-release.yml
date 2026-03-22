@@ -43,6 +43,12 @@ jobs:
           chmod +x .github/scripts/benchmark.sh
           .github/scripts/benchmark.sh
 
+      - name: Run syscalls tests
+        if: steps.parse.outputs.new_release == 'true'
+        run: |
+          chmod +x .github/scripts/syscalls.sh
+          .github/scripts/syscalls.sh > syscalls-results.txt
+
       - name: Generate release notes
         if: steps.parse.outputs.new_release == 'true'
         id: notes
