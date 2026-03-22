@@ -12,7 +12,12 @@
 # Details:
 # - release-name: the name of the release
 # - Release description: detailed information about the release
-# - =--- END ---=: marks the end of the release 
+# - =--- END ---=: marks the end of the release
+
+=--- vblblblbl ---=
+aa
+=--- END ---=
+
 
 =--- v1.7 ---=
 ### What changed
@@ -44,7 +49,7 @@
 - Added custom error page support for 401 Unauthorized
 
 > [!CAUTION]
-> The password is sent in Base64, which is easily readable by an attacker.  
+> The password is sent in Base64, which is easily readable by an attacker.
 > To protect your login data, consider enabling HTTPS with a reverse proxy or a cloudflare tunnel.
 =--- END ---=
 

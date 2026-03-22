@@ -28,7 +28,7 @@ jobs:
 
       - name: Install build dependencies
         if: steps.parse.outputs.new_release == 'true'
-        run: sudo apt-get install -y nasm binutils patchelf wrk
+        run: sudo apt-get install -y nasm binutils patchelf wrk strace
 
       - name: Build bundles
         if: steps.parse.outputs.new_release == 'true'
