@@ -40,7 +40,7 @@ DESCRIPTION_FILE="/tmp/release-description.txt"
 
     echo "<details>"
     echo "<summary>How it performs</summary>"
-    echo "  "
+    echo "<br>"
 
     # bin size
     if [ -f bin-size.txt ]; then
